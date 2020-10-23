@@ -15,8 +15,15 @@ func main() {
 	// 注册数据库
 	db.Setup(setting.MySQLSetting.User, setting.MySQLSetting.PassWord, setting.MySQLSetting.Host, setting.MySQLSetting.DataBase)
 
-	// 开启http服务
+	// 开启服务
 	r := gin.Default()
-	r.POST("/test", handler.Register)
+
+	// for general users
+	// 提交注册，修改资料
+	r.POST("/api/stoserver/v2/admin/backend/register", handler.UpdateAccount)
+
+	// for super users
+	// 审核, 封禁, 查阅，删除
+
 	r.Run(setting.ServerSetting.Host)
 }

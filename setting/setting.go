@@ -21,6 +21,16 @@ type Server struct {
 
 var ServerSetting = &Server{}
 
+type ImagePathConf struct {
+	AvatarPath             string
+	IDCardPath             string
+	GroomerCertificatePath string
+	HouseEnvironmentPath   string
+	HouseLicensePath       string
+}
+
+var ImagePathSetting = &ImagePathConf{}
+
 // Setup 启动配置
 func Setup() {
 	cfg, err := ini.Load("./conf/my.ini")
@@ -30,6 +40,7 @@ func Setup() {
 
 	mapTo(cfg, "mysql", MySQLSetting)
 	mapTo(cfg, "server", ServerSetting)
+	mapTo(cfg, "image", ImagePathSetting)
 }
 
 func mapTo(cfg *ini.File, section string, v interface{}) {
