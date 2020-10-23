@@ -17,5 +17,6 @@ func main() {
 
 	// 开启http服务
 	r := gin.Default()
-	r.GET("/api/stoserver/v2/stos/get_list", handler.MiningHandler)
+	r.POST("/test", handler.Register)
+	r.Run(setting.ServerSetting.Host)
 }

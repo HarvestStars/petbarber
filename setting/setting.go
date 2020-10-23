@@ -15,6 +15,12 @@ type MySQLConf struct {
 
 var MySQLSetting = &MySQLConf{}
 
+type Server struct {
+	Host string
+}
+
+var ServerSetting = &Server{}
+
 // Setup 启动配置
 func Setup() {
 	cfg, err := ini.Load("./conf/my.ini")
@@ -23,6 +29,7 @@ func Setup() {
 	}
 
 	mapTo(cfg, "mysql", MySQLSetting)
+	mapTo(cfg, "server", ServerSetting)
 }
 
 func mapTo(cfg *ini.File, section string, v interface{}) {
