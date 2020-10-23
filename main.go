@@ -21,7 +21,7 @@ func main() {
 	// for general users
 	// 提交注册，修改资料
 	r.GET("/api/pet/v2/getaccount", handler.GetAccount)
-	r.POST("/api/pet/v2/updateaccount", handler.UpdateAccount)
+	r.POST("/api/pet/v2/createorupdateaccount", handler.CreateOrUpdateAccount)
 	r.POST("/api/pet/v2/uploadidcard", handler.UploadIDCard)
 
 	// for super users
