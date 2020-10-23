@@ -5,7 +5,7 @@ import "github.com/jinzhu/gorm"
 // AccountInfo is the top sheet
 type AccountInfo struct {
 	gorm.Model
-	Account     string // 手机号
+	Tel         string `gorm:"not null;unique"` // 手机号
 	Avatar      string // 头像
 	NickName    string // 昵称
 	IsSuperUser bool   // 超级管理员
@@ -44,8 +44,8 @@ type PetHouse struct {
 	EnvironmentFrond  string // 门店门面照片
 	EnvironmentInside string // 门店内部环境照片
 	license           string // 营业执照照片
+	Location          string // 门店地址
 
-	Location  string // 门店地址
 	WorkScope string // 业务范围: 猫咪洗护，猫狗寄养等
 	AccountID uint
 	Account   AccountInfo

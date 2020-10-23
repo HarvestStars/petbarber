@@ -20,7 +20,9 @@ func main() {
 
 	// for general users
 	// 提交注册，修改资料
-	r.POST("/api/stoserver/v2/admin/backend/register", handler.UpdateAccount)
+	r.GET("/api/pet/v2/getaccount", handler.GetAccount)
+	r.POST("/api/pet/v2/updateaccount", handler.UpdateAccount)
+	r.POST("/api/pet/v2/uploadidcard", handler.UploadIDCard)
 
 	// for super users
 	// 审核, 封禁, 查阅，删除
