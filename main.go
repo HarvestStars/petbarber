@@ -20,9 +20,11 @@ func main() {
 
 	// for general users
 	// 提交注册，修改资料
-	r.GET("/api/pet/v2/getaccount", handler.GetAccount)
-	r.POST("/api/pet/v2/createorupdateaccount", handler.CreateOrUpdateAccount)
-	r.POST("/api/pet/v2/uploadidcard", handler.UploadIDCard)
+	r.POST("/api/infoload/v2/createorupdateaccount", handler.CreateOrUpdateAccount) // 上层表测试接口 上线时会移除本接口
+	r.POST("/api/infoload/v2/createorupdategroomer", handler.CreateOrUpdateGroomer)
+	r.POST("/api/infoload/v2/uploadgroomeridcard", handler.UploadGroomerIDCard)
+	r.POST("/api/infoload/v2/createorupdatehouse", handler.CreateOrUpdateHouse)
+	r.POST("/api/infoload/v2/uploadhouseidcard", handler.UploadHouseIDCard)
 
 	// for super users
 	// 审核, 封禁, 查阅，删除

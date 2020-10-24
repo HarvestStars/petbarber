@@ -23,8 +23,9 @@ var ServerSetting = &Server{}
 
 type ImagePathConf struct {
 	AvatarPath             string
-	IDCardPath             string
+	GroomerIDCardPath      string
 	GroomerCertificatePath string
+	HouseIDCardPath        string
 	HouseEnvironmentPath   string
 	HouseLicensePath       string
 }
