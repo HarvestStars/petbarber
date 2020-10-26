@@ -29,7 +29,7 @@ type PetGroomer struct {
 	// 专业信息
 	Qualification      int    // 资质
 	IsCertifiedGroomer bool   // 人工审核认证美容师
-	CertificateFrond   string // 资质证明正面
+	CertificateFront   string // 资质证明正面
 	CertificateBack    string // 资质证明背面
 
 	Specialty string // 专业擅长: 猫咪清理，洁牙等
@@ -54,9 +54,9 @@ type PetHouse struct {
 	// 专业信息
 	Qualification     int    // 资质
 	IsCertifiedHouse  bool   // 人工审核认证门店
-	EnvironmentFrond  string // 门店门面照片
+	EnvironmentFront  string // 门店门面照片
 	EnvironmentInside string // 门店内部环境照片
-	license           string // 营业执照照片
+	License           string // 营业执照照片
 	Location          string // 门店地址
 
 	WorkScope string // 业务范围: 猫咪洗护，猫狗寄养等
