@@ -24,10 +24,12 @@ func main() {
 
 	r.POST("/api/infoload/v2/createorupdategroomer", handler.CreateOrUpdateGroomer)
 	r.POST("/api/infoload/v2/uploadgroomeridcard", handler.UploadGroomerIDCard)
+	r.POST("/api/infoload/v2/uploadgroomeravatar", handler.UploadGroomerAvatar)
 	r.POST("/api/infoload/v2/uploadgroomercertificate", handler.UploadGroomerCertificate)
 
 	r.POST("/api/infoload/v2/createorupdatehouse", handler.CreateOrUpdateHouse)
 	r.POST("/api/infoload/v2/uploadhouseidcard", handler.UploadHouseIDCard)
+	r.POST("/api/infoload/v2/uploadhouseavatar", handler.UploadHouseAvatar)
 	r.POST("/api/infoload/v2/uploadhouselicense", handler.UploadHouseLicense)
 
 	// for super users
