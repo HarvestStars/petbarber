@@ -91,56 +91,63 @@ func UploadImage(c *gin.Context) {
 	case "avatar":
 		fileFront, headerFront, err := c.Request.FormFile("avatar")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		err = UploadAvatar(accountID, fileFront, headerFront, userType)
 		if err != nil {
-			c.JSON(400, gin.H{"code": 402, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
 		return
 
-	case "idcard":
-		IDCardNumber := c.Query("idcardnumber")
+	case "id_card":
+		IDCardNumber := c.Query("id_card_number")
 		fileFront, headerFront, err := c.Request.FormFile("id-front")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		fileBack, headerBack, err := c.Request.FormFile("id-back")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		err = UploadIDCard(accountID, IDCardNumber, fileFront, headerFront, fileBack, headerBack, userType)
 		if err != nil {
-			c.JSON(400, gin.H{"code": 402, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": err.Error()})
 			return
 		}
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		return
 
 	case "certificate":
 		var groomer db.PetGroomer
-		db.DataBase.Where("account_id = ?", accountID).First(&groomer)
+		groomerAccount := 0
+		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
+		if groomerAccount == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "没有找到该美容师账户"})
+			return
+		}
 		fileFront, headerFront, err := c.Request.FormFile("certifi-front")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		fileBack, headerBack, err := c.Request.FormFile("certifi-back")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerCertificatePath)
 		if err != nil {
-			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "data": "图片大小不能超过5M", "error": nil})
 			return
 		}
 		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerCertificatePath)
 		if err != nil {
-			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "data": "图片大小不能超过5M", "error": nil})
 			return
 		}
 		db.DataBase.Model(&groomer).Update(db.PetGroomer{
@@ -151,35 +158,40 @@ func UploadImage(c *gin.Context) {
 
 	case "house_license":
 		var house db.PetHouse
-		db.DataBase.Where("account_id = ?", accountID).First(&house)
+		houseAccount := 0
+		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
+		if houseAccount == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "没有找到该门店账户"})
+			return
+		}
 		fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment-front")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment-inside")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		fileFront, headerFront, err := c.Request.FormFile("license-front")
 		if err != nil {
-			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 			return
 		}
 		fileNameEnvFront, err := transferImage(fileEnvFront, headerEnvFront, setting.ImagePathSetting.HouseEnvironmentPath)
 		if err != nil {
-			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "data": "图片大小不能超过5M", "error": nil})
 			return
 		}
 		fileNameEnvIn, err := transferImage(fileEnvIn, headerEnvIn, setting.ImagePathSetting.HouseEnvironmentPath)
 		if err != nil {
-			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "data": "图片大小不能超过5M", "error": nil})
 			return
 		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
 		if err != nil {
-			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "data": "图片大小不能超过5M", "error": nil})
 			return
 		}
 		db.DataBase.Model(&house).Update(db.PetHouse{
@@ -188,7 +200,10 @@ func UploadImage(c *gin.Context) {
 			License:           setting.ImagePathSetting.HouseLicensePath + fileNameFront})
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
 		return
+
 	default:
+		c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "未知请求"})
+		return
 	}
 }
 
@@ -197,7 +212,11 @@ func UploadAvatar(accountID uint64, fileFront multipart.File, headerFront *multi
 	switch userType {
 	case "groomer":
 		var groomer db.PetGroomer
-		db.DataBase.Where("account_id = ?", accountID).First(&groomer)
+		groomerAccount := 0
+		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
+		if groomerAccount == 0 {
+			return errors.New("没有找到该美容师账户")
+		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.AvatarPath)
 		if err != nil {
 			return errors.New("头像大小不能超过3M")
@@ -207,7 +226,11 @@ func UploadAvatar(accountID uint64, fileFront multipart.File, headerFront *multi
 		return nil
 	case "house":
 		var house db.PetHouse
-		db.DataBase.Where("account_id = ?", accountID).First(&house)
+		houseAccount := 0
+		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
+		if houseAccount == 0 {
+			return errors.New("没有找到该门店账户")
+		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.AvatarPath)
 		if err != nil {
 			return errors.New("头像大小不能超过3M")
@@ -225,7 +248,11 @@ func UploadIDCard(accountID uint64, IDCardNumber string, fileFront multipart.Fil
 	switch userType {
 	case "groomer":
 		var groomer db.PetGroomer
-		db.DataBase.Where("account_id = ?", accountID).First(&groomer)
+		groomerAccount := 0
+		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
+		if groomerAccount == 0 {
+			return errors.New("没有找到该美容师账户")
+		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerIDCardPath)
 		if err != nil {
 			return errors.New("图片大小不能超过5M")
@@ -241,7 +268,11 @@ func UploadIDCard(accountID uint64, IDCardNumber string, fileFront multipart.Fil
 		return nil
 	case "house":
 		var house db.PetHouse
-		db.DataBase.Where("account_id = ?", accountID).First(&house)
+		houseAccount := 0
+		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
+		if houseAccount == 0 {
+			return errors.New("没有找到该门店账户")
+		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseIDCardPath)
 		if err != nil {
 			return errors.New("图片大小不能超过5M")

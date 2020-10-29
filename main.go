@@ -24,9 +24,5 @@ func main() {
 	r.POST("/api/load/v2/registgroomer", handler.RegistUpdateGroomer)
 	r.POST("/api/load/v2/registhouse", handler.RegistUpdateHouse)
 	r.POST("/api/load/v2/uploadimage", handler.UploadImage)
-
-	// for super users
-	// 审核, 封禁, 查阅，删除
-
 	r.Run(setting.ServerSetting.Host)
 }
