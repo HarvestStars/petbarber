@@ -20,9 +20,9 @@ func main() {
 
 	// for general users
 	// 提交注册，修改资料
-	r.POST("/api/load/v2/registaccount", handler.RegistUpdateAccount) // 上层表测试接口 上线时会移除本接口
-	r.POST("/api/load/v2/registgroomer", handler.RegistUpdateGroomer)
-	r.POST("/api/load/v2/registhouse", handler.RegistUpdateHouse)
-	r.POST("/api/load/v2/uploadimage", handler.UploadImage)
+	r.POST("/api/v1/account/registaccount", handler.RegistUpdateAccount) // 上层表测试接口 仅供辅助测试
+	r.POST("/api/v1/account/uploadgroomer", handler.UploadGroomer)       // 美容师信息页 非图片类信息上传
+	r.POST("/api/v1/account/uploadhouse", handler.UploadHouse)           // 门店信息页 非图片类信息上传
+	r.POST("/api/v1/account/uploadimage", handler.UploadImage)           // 门店与美容师 图片类信息上传
 	r.Run(setting.ServerSetting.Host)
 }

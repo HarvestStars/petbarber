@@ -39,8 +39,8 @@ func RegistUpdateAccount(c *gin.Context) {
 	}
 }
 
-// RegistUpdateGroomer 更新美容师信息:昵称，电话等文字信息
-func RegistUpdateGroomer(c *gin.Context) {
+// UploadGroomer 更新美容师非图片信息:昵称，电话等文字信息
+func UploadGroomer(c *gin.Context) {
 	var groomer db.PetGroomer
 	err := c.Bind(&groomer)
 	if err != nil {
@@ -60,8 +60,8 @@ func RegistUpdateGroomer(c *gin.Context) {
 	}
 }
 
-// RegistUpdateHouse 更新美容师信息:昵称，电话等文字信息
-func RegistUpdateHouse(c *gin.Context) {
+// UploadHouse 更新门店非图片类信息:昵称，电话等文字信息
+func UploadHouse(c *gin.Context) {
 	var house db.PetHouse
 	err := c.Bind(&house)
 	if err != nil {
@@ -81,7 +81,7 @@ func RegistUpdateHouse(c *gin.Context) {
 	}
 }
 
-// UploadImage 上传图片的总路由
+// UploadImage 上传图片功能
 func UploadImage(c *gin.Context) {
 	accountIDStr := c.Query("account_id")
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
