@@ -20,17 +20,10 @@ func main() {
 
 	// for general users
 	// 提交注册，修改资料
-	r.POST("/api/infoload/v2/createorupdateaccount", handler.CreateOrUpdateAccount) // 上层表测试接口 上线时会移除本接口
-
-	r.POST("/api/infoload/v2/createorupdategroomer", handler.CreateOrUpdateGroomer)
-	r.POST("/api/infoload/v2/uploadgroomeridcard", handler.UploadGroomerIDCard)
-	r.POST("/api/infoload/v2/uploadgroomeravatar", handler.UploadGroomerAvatar)
-	r.POST("/api/infoload/v2/uploadgroomercertificate", handler.UploadGroomerCertificate)
-
-	r.POST("/api/infoload/v2/createorupdatehouse", handler.CreateOrUpdateHouse)
-	r.POST("/api/infoload/v2/uploadhouseidcard", handler.UploadHouseIDCard)
-	r.POST("/api/infoload/v2/uploadhouseavatar", handler.UploadHouseAvatar)
-	r.POST("/api/infoload/v2/uploadhouselicense", handler.UploadHouseLicense)
+	r.POST("/api/load/v2/registaccount", handler.RegistUpdateAccount) // 上层表测试接口 上线时会移除本接口
+	r.POST("/api/load/v2/registgroomer", handler.RegistUpdateGroomer)
+	r.POST("/api/load/v2/registhouse", handler.RegistUpdateHouse)
+	r.POST("/api/load/v2/uploadimage", handler.UploadImage)
 
 	// for super users
 	// 审核, 封禁, 查阅，删除

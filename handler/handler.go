@@ -18,8 +18,8 @@ import (
 
 const uploadMaxBytes int64 = 1024 * 1024 // 1M
 // ----------------------------------------------------- 普通用户 -----------------------------------------------------
-// CreateOrUpdateAccount 更新账户信息:昵称，电话等文字信息
-func CreateOrUpdateAccount(c *gin.Context) {
+// RegistUpdateAccount 更新账户信息:昵称，电话等文字信息
+func RegistUpdateAccount(c *gin.Context) {
 	var account db.AccountInfo
 	err := c.Bind(&account)
 	if err != nil {
@@ -39,9 +39,8 @@ func CreateOrUpdateAccount(c *gin.Context) {
 	}
 }
 
-// 美容师信息录入接口
-// CreateOrUpdateGroomer 更新美容师信息:昵称，电话等文字信息
-func CreateOrUpdateGroomer(c *gin.Context) {
+// RegistUpdateGroomer 更新美容师信息:昵称，电话等文字信息
+func RegistUpdateGroomer(c *gin.Context) {
 	var groomer db.PetGroomer
 	err := c.Bind(&groomer)
 	if err != nil {
@@ -61,89 +60,8 @@ func CreateOrUpdateGroomer(c *gin.Context) {
 	}
 }
 
-// UploadGroomerIDCard 上传美容师身份证正反面照片
-func UploadGroomerIDCard(c *gin.Context) {
-	AccountIDStr := c.Request.PostFormValue("account_id")
-	AccountID, _ := strconv.ParseUint(AccountIDStr, 10, 32)
-	var groomer db.PetGroomer
-	db.DataBase.Where("account_id = ?", AccountID).First(&groomer)
-
-	// FormFile方法会读取参数“upload”后面的文件名，返回值是一个File指针，和一个FileHeader指针，和一个err错误。
-	fileFront, headerFront, err := c.Request.FormFile("id-front")
-	fileBack, headerBack, err := c.Request.FormFile("id-back")
-	IDCardNumber := c.Request.PostFormValue("idcardnumber")
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "错误请求", "error": err.Error()})
-		return
-	}
-
-	fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerIDCardPath)
-	fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerIDCardPath)
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "图片大小不能超过3M", "error": nil})
-	}
-
-	db.DataBase.Model(&groomer).Update(db.PetGroomer{
-		IDCardNumber: IDCardNumber,
-		IDCardFront:  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
-		IDCardBack:   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
-}
-
-// UploadGroomerAvatar 上传美容师头像
-func UploadGroomerAvatar(c *gin.Context) {
-	AccountIDStr := c.Request.PostFormValue("account_id")
-	AccountID, _ := strconv.ParseUint(AccountIDStr, 10, 32)
-	var groomer db.PetGroomer
-	db.DataBase.Where("account_id = ?", AccountID).First(&groomer)
-
-	// FormFile方法会读取参数“upload”后面的文件名，返回值是一个File指针，和一个FileHeader指针，和一个err错误。
-	fileFront, headerFront, err := c.Request.FormFile("avatar")
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "错误请求", "error": err.Error()})
-		return
-	}
-
-	fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.AvatarPath)
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "图片大小不能超过3M", "error": nil})
-	}
-
-	db.DataBase.Model(&groomer).Update(db.PetGroomer{
-		Avatar: setting.ImagePathSetting.AvatarPath + fileNameFront})
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
-}
-
-// UploadGroomerCertificate 上传门美容师资格证
-func UploadGroomerCertificate(c *gin.Context) {
-	AccountIDStr := c.Request.PostFormValue("account_id")
-	AccountID, _ := strconv.ParseUint(AccountIDStr, 10, 32)
-	var groomer db.PetGroomer
-	db.DataBase.Where("account_id = ?", AccountID).First(&groomer)
-
-	// FormFile方法会读取参数“upload”后面的文件名，返回值是一个File指针，和一个FileHeader指针，和一个err错误。
-	fileFront, headerFront, err := c.Request.FormFile("certifi-front")
-	fileBack, headerBack, err := c.Request.FormFile("certifi-back")
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "错误请求", "error": err.Error()})
-		return
-	}
-
-	fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerCertificatePath)
-	fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerCertificatePath)
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "图片大小不能超过3M", "error": nil})
-	}
-
-	db.DataBase.Model(&groomer).Update(db.PetGroomer{
-		CertificateFront: setting.ImagePathSetting.GroomerCertificatePath + fileNameFront,
-		CertificateBack:  setting.ImagePathSetting.GroomerCertificatePath + fileNameBack})
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
-}
-
-// 门店信息录入接口
-// CreateOrUpdateHouse 更新美容师信息:昵称，电话等文字信息
-func CreateOrUpdateHouse(c *gin.Context) {
+// RegistUpdateHouse 更新美容师信息:昵称，电话等文字信息
+func RegistUpdateHouse(c *gin.Context) {
 	var house db.PetHouse
 	err := c.Bind(&house)
 	if err != nil {
@@ -163,86 +81,184 @@ func CreateOrUpdateHouse(c *gin.Context) {
 	}
 }
 
-// UploadHouseIDCard 上传门店主身份证正反面照片
-func UploadHouseIDCard(c *gin.Context) {
-	AccountIDStr := c.Request.PostFormValue("account_id")
-	AccountID, _ := strconv.ParseUint(AccountIDStr, 10, 32)
-	var house db.PetHouse
-	db.DataBase.Where("account_id = ?", AccountID).First(&house)
-
-	// FormFile方法会读取参数“upload”后面的文件名，返回值是一个File指针，和一个FileHeader指针，和一个err错误。
-	fileFront, headerFront, err := c.Request.FormFile("id-front")
-	fileBack, headerBack, err := c.Request.FormFile("id-back")
-	IDCardNumber := c.Request.PostFormValue("idcardnumber")
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "错误请求", "error": err.Error()})
+// UploadImage 上传图片的总路由
+func UploadImage(c *gin.Context) {
+	accountIDStr := c.Query("account_id")
+	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
+	userType := c.Query("user_type")
+	imageType := c.Query("image_type")
+	switch imageType {
+	case "avatar":
+		fileFront, headerFront, err := c.Request.FormFile("avatar")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		err = UploadAvatar(accountID, fileFront, headerFront, userType)
+		if err != nil {
+			c.JSON(400, gin.H{"code": 402, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
 		return
-	}
 
-	fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseIDCardPath)
-	fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.HouseIDCardPath)
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "图片大小不能超过3M", "error": nil})
-	}
+	case "idcard":
+		IDCardNumber := c.Query("idcardnumber")
+		fileFront, headerFront, err := c.Request.FormFile("id-front")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		fileBack, headerBack, err := c.Request.FormFile("id-back")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		err = UploadIDCard(accountID, IDCardNumber, fileFront, headerFront, fileBack, headerBack, userType)
+		if err != nil {
+			c.JSON(400, gin.H{"code": 402, "msg": "Sorry", "data": err.Error()})
+			return
+		}
 
-	db.DataBase.Model(&house).Update(db.PetHouse{
-		IDCardNumber: IDCardNumber,
-		IDCardFront:  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
-		IDCardBack:   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+	case "certificate":
+		var groomer db.PetGroomer
+		db.DataBase.Where("account_id = ?", accountID).First(&groomer)
+		fileFront, headerFront, err := c.Request.FormFile("certifi-front")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		fileBack, headerBack, err := c.Request.FormFile("certifi-back")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerCertificatePath)
+		if err != nil {
+			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			return
+		}
+		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerCertificatePath)
+		if err != nil {
+			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			return
+		}
+		db.DataBase.Model(&groomer).Update(db.PetGroomer{
+			CertificateFront: setting.ImagePathSetting.GroomerCertificatePath + fileNameFront,
+			CertificateBack:  setting.ImagePathSetting.GroomerCertificatePath + fileNameBack})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		return
+
+	case "house_license":
+		var house db.PetHouse
+		db.DataBase.Where("account_id = ?", accountID).First(&house)
+		fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment-front")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment-inside")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		fileFront, headerFront, err := c.Request.FormFile("license-front")
+		if err != nil {
+			c.JSON(400, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+			return
+		}
+		fileNameEnvFront, err := transferImage(fileEnvFront, headerEnvFront, setting.ImagePathSetting.HouseEnvironmentPath)
+		if err != nil {
+			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			return
+		}
+		fileNameEnvIn, err := transferImage(fileEnvIn, headerEnvIn, setting.ImagePathSetting.HouseEnvironmentPath)
+		if err != nil {
+			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			return
+		}
+		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
+		if err != nil {
+			c.JSON(400, gin.H{"code": 402, "data": "图片大小不能超过5M", "error": nil})
+			return
+		}
+		db.DataBase.Model(&house).Update(db.PetHouse{
+			EnvironmentFront:  setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
+			EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
+			License:           setting.ImagePathSetting.HouseLicensePath + fileNameFront})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		return
+	default:
+	}
 }
 
-// UploadHouseAvatar 上传门店主头像
-func UploadHouseAvatar(c *gin.Context) {
-	AccountIDStr := c.Request.PostFormValue("account_id")
-	AccountID, _ := strconv.ParseUint(AccountIDStr, 10, 32)
-	var house db.PetHouse
-	db.DataBase.Where("account_id = ?", AccountID).First(&house)
-
-	// FormFile方法会读取参数“upload”后面的文件名，返回值是一个File指针，和一个FileHeader指针，和一个err错误。
-	fileFront, headerFront, err := c.Request.FormFile("avatar")
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "错误请求", "error": err.Error()})
-		return
+// UploadAvatar 上传头像
+func UploadAvatar(accountID uint64, fileFront multipart.File, headerFront *multipart.FileHeader, userType string) error {
+	switch userType {
+	case "groomer":
+		var groomer db.PetGroomer
+		db.DataBase.Where("account_id = ?", accountID).First(&groomer)
+		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.AvatarPath)
+		if err != nil {
+			return errors.New("头像大小不能超过3M")
+		}
+		db.DataBase.Model(&groomer).Update(db.PetGroomer{
+			Avatar: setting.ImagePathSetting.AvatarPath + fileNameFront})
+		return nil
+	case "house":
+		var house db.PetHouse
+		db.DataBase.Where("account_id = ?", accountID).First(&house)
+		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.AvatarPath)
+		if err != nil {
+			return errors.New("头像大小不能超过3M")
+		}
+		db.DataBase.Model(&house).Update(db.PetHouse{
+			Avatar: setting.ImagePathSetting.AvatarPath + fileNameFront})
+		return nil
+	default:
+		return errors.New("头像类型错误")
 	}
-
-	fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.AvatarPath)
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "图片大小不能超过3M", "error": nil})
-	}
-
-	db.DataBase.Model(&house).Update(db.PetHouse{
-		Avatar: setting.ImagePathSetting.AvatarPath + fileNameFront})
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
 }
 
-// UploadHouseLicense 上传门店执照, 环境
-func UploadHouseLicense(c *gin.Context) {
-	AccountIDStr := c.Request.PostFormValue("account_id")
-	AccountID, _ := strconv.ParseUint(AccountIDStr, 10, 32)
-	var house db.PetHouse
-	db.DataBase.Where("account_id = ?", AccountID).First(&house)
-
-	fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment-front")
-	fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment-inside")
-	fileFront, headerFront, err := c.Request.FormFile("license-front")
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "错误请求", "error": err.Error()})
-		return
+// UploadIDCard 上传身份证正反面照片
+func UploadIDCard(accountID uint64, IDCardNumber string, fileFront multipart.File, headerFront *multipart.FileHeader, fileBack multipart.File, headerBack *multipart.FileHeader, userType string) error {
+	switch userType {
+	case "groomer":
+		var groomer db.PetGroomer
+		db.DataBase.Where("account_id = ?", accountID).First(&groomer)
+		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerIDCardPath)
+		if err != nil {
+			return errors.New("图片大小不能超过5M")
+		}
+		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerIDCardPath)
+		if err != nil {
+			return errors.New("图片大小不能超过5M")
+		}
+		db.DataBase.Model(&groomer).Update(db.PetGroomer{
+			IDCardNumber: IDCardNumber,
+			IDCardFront:  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
+			IDCardBack:   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
+		return nil
+	case "house":
+		var house db.PetHouse
+		db.DataBase.Where("account_id = ?", accountID).First(&house)
+		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseIDCardPath)
+		if err != nil {
+			return errors.New("图片大小不能超过5M")
+		}
+		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.HouseIDCardPath)
+		if err != nil {
+			return errors.New("图片大小不能超过5M")
+		}
+		db.DataBase.Model(&house).Update(db.PetHouse{
+			IDCardNumber: IDCardNumber,
+			IDCardFront:  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
+			IDCardBack:   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
+		return nil
+	default:
+		return errors.New("身份证类型错误")
 	}
 
-	fileNameEnvFront, err := transferImage(fileEnvFront, headerEnvFront, setting.ImagePathSetting.HouseEnvironmentPath)
-	fileNameEnvIn, err := transferImage(fileEnvIn, headerEnvIn, setting.ImagePathSetting.HouseEnvironmentPath)
-	fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
-	if err != nil {
-		c.JSON(200, gin.H{"code": 0, "data": "图片大小不能超过3M", "error": nil})
-	}
-
-	db.DataBase.Model(&house).Update(db.PetHouse{
-		EnvironmentFront:  setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
-		EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
-		License:           setting.ImagePathSetting.HouseLicensePath + fileNameFront})
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
 }
 
 func transferImage(file multipart.File, header *multipart.FileHeader, rootPath string) (string, error) {
@@ -252,7 +268,7 @@ func transferImage(file multipart.File, header *multipart.FileHeader, rootPath s
 	u1, _ := uuid.NewV4()
 	fileName = u1.String()
 	fileName += filesuffix
-	if header.Size > 3*uploadMaxBytes {
+	if header.Size > 5*uploadMaxBytes {
 		return "", errors.New("over size")
 	}
 
@@ -283,6 +299,3 @@ func transferImage(file multipart.File, header *multipart.FileHeader, rootPath s
 	}
 	return fileName, nil
 }
-
-// ----------------------------------------------------- 超级管理员 -----------------------------------------------------
-// 人工审核接口
