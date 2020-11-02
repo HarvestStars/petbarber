@@ -103,7 +103,7 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "id_card":
-		IDCardNumber := c.Query("id_card_number")
+		IDCardNumber := c.Request.PostFormValue("id_card_number")
 		fileFront, headerFront, err := c.Request.FormFile("id-front")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
