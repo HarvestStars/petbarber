@@ -15,9 +15,9 @@ type AccountInfo struct {
 // PetGroomer 宠物美容师
 type PetGroomer struct {
 	gorm.Model
-	Avatar   string // 头像
-	NickName string // 昵称
-	Rating   int    // 星级
+	Avatar   string  // 头像
+	NickName string  // 昵称
+	Rating   float32 // 星级
 
 	// 身份证信息
 	Name         string // 实名
@@ -40,9 +40,9 @@ type PetGroomer struct {
 // PetHouse 宠物门店
 type PetHouse struct {
 	gorm.Model
-	Avatar   string // 头像
-	NickName string // 昵称
-	Rating   int    //星级
+	Avatar   string  // 头像
+	NickName string  // 昵称
+	Rating   float32 // 星级
 
 	// 身份证信息
 	Name         string // 实名

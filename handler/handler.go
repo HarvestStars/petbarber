@@ -31,11 +31,11 @@ func RegistUpdateAccount(c *gin.Context) {
 	if count != 0 {
 		// exist
 		db.DataBase.Model(&db.AccountInfo{}).Where("account = ?", account.Account).Update(&account)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 	} else {
 		// create
 		db.DataBase.Create(&account)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "created."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "创建成功"})
 	}
 }
 
@@ -52,11 +52,11 @@ func UploadGroomer(c *gin.Context) {
 	if count != 0 {
 		// exist
 		db.DataBase.Model(&db.PetGroomer{}).Where("account_id = ?", groomer.AccountID).Update(&groomer)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 	} else {
 		// create
 		db.DataBase.Create(&groomer)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "created."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "创建成功"})
 	}
 }
 
@@ -73,17 +73,17 @@ func UploadHouse(c *gin.Context) {
 	if count != 0 {
 		// exist
 		db.DataBase.Model(&db.PetHouse{}).Where("account_id = ?", house.AccountID).Update(&house)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 	} else {
 		// create
 		db.DataBase.Create(&house)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "created."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "创建成功"})
 	}
 }
 
 // UploadImage 上传图片功能
 func UploadImage(c *gin.Context) {
-	accountIDStr := c.Query("account_id")
+	accountIDStr := c.Query("`account_id`")
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
 	userType := c.Query("user_type")
 	imageType := c.Query("image_type")
@@ -99,7 +99,7 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 		return
 
 	case "id_card":
@@ -119,7 +119,7 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 		return
 
 	case "certificate":
@@ -153,7 +153,7 @@ func UploadImage(c *gin.Context) {
 		db.DataBase.Model(&groomer).Update(db.PetGroomer{
 			CertificateFront: setting.ImagePathSetting.GroomerCertificatePath + fileNameFront,
 			CertificateBack:  setting.ImagePathSetting.GroomerCertificatePath + fileNameBack})
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 		return
 
 	case "house_license":
@@ -198,7 +198,7 @@ func UploadImage(c *gin.Context) {
 			EnvironmentFront:  setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
 			EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
 			License:           setting.ImagePathSetting.HouseLicensePath + fileNameFront})
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "update done."})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 		return
 
 	default:
