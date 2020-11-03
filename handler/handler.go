@@ -2,18 +2,14 @@ package handler
 
 import (
 	"errors"
-	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
-	"os"
-	"path"
 	"strconv"
 
 	"github.com/HarvestStars/petbarber/db"
 	"github.com/HarvestStars/petbarber/setting"
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid"
 )
 
 const uploadMaxBytes int64 = 1024 * 1024 // 1M
@@ -83,9 +79,17 @@ func UploadHouse(c *gin.Context) {
 
 // UploadImage 上传图片功能
 func UploadImage(c *gin.Context) {
-	accountIDStr := c.Query("`account_id`")
+	tokenStr := c.Request.Header.Get("authorization")
+	tokenPayload := make(map[string]interface{})
+	err := parseJWTPayload(tokenStr, &tokenPayload)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+		return
+	}
+
+	userType := tokenPayload["user_type"].(string)
+	accountIDStr := tokenPayload["account_id"].(string)
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
-	userType := c.Query("user_type")
 	imageType := c.Query("image_type")
 	switch imageType {
 	case "avatar":
@@ -289,44 +293,4 @@ func UploadIDCard(accountID uint64, IDCardNumber string, fileFront multipart.Fil
 	default:
 		return errors.New("身份证类型错误")
 	}
-
-}
-
-func transferImage(file multipart.File, header *multipart.FileHeader, rootPath string) (string, error) {
-	// header调用Filename方法，就可以得到文件名
-	fileName := header.Filename
-	filesuffix := path.Ext(fileName)
-	u1, _ := uuid.NewV4()
-	fileName = u1.String()
-	fileName += filesuffix
-	if header.Size > 5*uploadMaxBytes {
-		return "", errors.New("over size")
-	}
-
-	// 创建一个文件，文件名为filename，这里的返回值out也是一个File指针
-	_, err := os.Stat(rootPath)
-	if err != nil {
-		if os.IsExist(err) {
-			// 文件夹存在
-		} else {
-			err = os.Mkdir(rootPath, os.ModePerm)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	out, err := os.Create(rootPath + fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer out.Close()
-
-	// 将file的内容拷贝到out
-	_, err = io.Copy(out, file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return fileName, nil
 }

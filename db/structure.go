@@ -52,7 +52,6 @@ type PetHouse struct {
 	IsVerified   bool   // 实名认证
 
 	// 专业信息
-	Qualification     int    // 资质
 	IsCertifiedHouse  bool   // 人工审核认证门店
 	EnvironmentFront  string // 门店门面照片
 	EnvironmentInside string // 门店内部环境照片
