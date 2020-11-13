@@ -38,17 +38,31 @@ func RegistUpdateAccount(c *gin.Context) {
 
 // UploadGroomer 更新美容师非图片信息:昵称，电话等文字信息
 func UploadGroomer(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+		return
+	}
+	accountIDStr := tokenPayload["account_id"].(string)
+	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
+
 	var groomer db.PetGroomer
-	err := c.Bind(&groomer)
+	err = c.Bind(&groomer)
 	if err != nil {
 		log.Print(err.Error())
 		return
 	}
 	count := 0
-	db.DataBase.Model(&db.PetGroomer{}).Where("account_id = ?", groomer.AccountID).Count(&count)
+	db.DataBase.Model(&db.PetGroomer{}).Where("account_id = ?", accountID).Count(&count)
 	if count != 0 {
 		// exist
-		db.DataBase.Model(&db.PetGroomer{}).Where("account_id = ?", groomer.AccountID).Update(&groomer)
+		db.DataBase.Model(&db.PetGroomer{}).Where("account_id = ?", accountID).Update(&groomer)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 	} else {
 		// create
@@ -59,17 +73,31 @@ func UploadGroomer(c *gin.Context) {
 
 // UploadHouse 更新门店非图片类信息:昵称，电话等文字信息
 func UploadHouse(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+		return
+	}
+	accountIDStr := tokenPayload["account_id"].(string)
+	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
+
 	var house db.PetHouse
-	err := c.Bind(&house)
+	err = c.Bind(&house)
 	if err != nil {
 		log.Print(err.Error())
 		return
 	}
 	count := 0
-	db.DataBase.Model(&db.PetHouse{}).Where("account_id = ?", house.AccountID).Count(&count)
+	db.DataBase.Model(&db.PetHouse{}).Where("account_id = ?", accountID).Count(&count)
 	if count != 0 {
 		// exist
-		db.DataBase.Model(&db.PetHouse{}).Where("account_id = ?", house.AccountID).Update(&house)
+		db.DataBase.Model(&db.PetHouse{}).Where("account_id = ?", accountID).Update(&house)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
 	} else {
 		// create
@@ -87,6 +115,10 @@ func UploadImage(c *gin.Context) {
 		return
 	}
 	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
+		return
+	}
 	userType := tokenPayload["user_type"].(string)
 	accountIDStr := tokenPayload["account_id"].(string)
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
