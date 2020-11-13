@@ -32,6 +32,12 @@ type ImagePathConf struct {
 
 var ImagePathSetting = &ImagePathConf{}
 
+type JwtConf struct {
+	SecretKey string
+}
+
+var JwtSetting = &JwtConf{}
+
 // Setup 启动配置
 func Setup() {
 	cfg, err := ini.Load("./conf/my.ini")
@@ -42,6 +48,7 @@ func Setup() {
 	mapTo(cfg, "mysql", MySQLSetting)
 	mapTo(cfg, "server", ServerSetting)
 	mapTo(cfg, "image", ImagePathSetting)
+	mapTo(cfg, "jwt", JwtSetting)
 }
 
 func mapTo(cfg *ini.File, section string, v interface{}) {

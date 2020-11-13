@@ -1,9 +1,8 @@
 package handler
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
@@ -11,6 +10,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/HarvestStars/petbarber/setting"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofrs/uuid"
 )
 
@@ -60,15 +61,28 @@ func transferImage(file multipart.File, header *multipart.FileHeader, rootPath s
 	return fileName, nil
 }
 
-func parseJWTPayload(tokenStr string, tokenPayload *map[string]interface{}) error {
-	parts := strings.Split(tokenStr, ".")
-	payloadByte, err := base64.StdEncoding.DecodeString(parts[0])
-	if err != nil {
-		return err
+func extractTokenFromAuth(auth string) (string, error) {
+	if strings.HasPrefix(auth, "Bearer ") {
+		token := auth[len("Bearer "):]
+		return token, nil
 	}
-	err = json.Unmarshal(payloadByte, tokenPayload)
-	if err != nil {
-		return err
+	return auth, errors.New("token 格式不合法")
+}
+
+//解析token
+func ParseToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return []byte(setting.JwtSetting.SecretKey), nil
+	})
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	} else {
+		return nil, err
 	}
-	return nil
 }

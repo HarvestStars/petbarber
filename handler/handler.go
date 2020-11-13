@@ -13,6 +13,7 @@ import (
 )
 
 const uploadMaxBytes int64 = 1024 * 1024 // 1M
+
 // ----------------------------------------------------- 普通用户 -----------------------------------------------------
 // RegistUpdateAccount 更新账户信息:昵称，电话等文字信息
 func RegistUpdateAccount(c *gin.Context) {
@@ -79,17 +80,17 @@ func UploadHouse(c *gin.Context) {
 
 // UploadImage 上传图片功能
 func UploadImage(c *gin.Context) {
-	tokenStr := c.Request.Header.Get("authorization")
-	tokenPayload := make(map[string]interface{})
-	err := parseJWTPayload(tokenStr, &tokenPayload)
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 		return
 	}
-
+	tokenPayload, err := ParseToken(tokenStr)
 	userType := tokenPayload["user_type"].(string)
 	accountIDStr := tokenPayload["account_id"].(string)
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
+
 	imageType := c.Query("image_type")
 	switch imageType {
 	case "avatar":
