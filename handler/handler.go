@@ -49,7 +49,7 @@ func UploadGroomer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 		return
 	}
-	accountIDStr := tokenPayload["account_id"].(string)
+	accountIDStr := tokenPayload["id"].(string)
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
 
 	var groomer db.PetGroomer
@@ -84,7 +84,7 @@ func UploadHouse(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 		return
 	}
-	accountIDStr := tokenPayload["account_id"].(string)
+	accountIDStr := tokenPayload["id"].(string)
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
 
 	var house db.PetHouse
@@ -119,8 +119,8 @@ func UploadImage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 		return
 	}
-	userType := tokenPayload["user_type"].(string)
-	accountIDStr := tokenPayload["account_id"].(string)
+	userType := tokenPayload["utype"].(string)
+	accountIDStr := tokenPayload["id"].(string)
 	accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
 
 	imageType := c.Query("image_type")
