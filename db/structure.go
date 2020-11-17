@@ -2,18 +2,8 @@ package db
 
 import "github.com/jinzhu/gorm"
 
-// AccountInfo is the top sheet
-type AccountInfo struct {
-	gorm.Model
-	Account         string `gorm:"not null;unique"` // 手机号
-	Hashed_password string // 密码
-	IsActive        bool   // 是否激活
-	IsSuperUser     bool   // 超级管理员
-	UserType        int    // 美容师 or 门店 or both
-}
-
 // PetGroomer 宠物美容师
-type PetGroomer struct {
+type TuGroomer struct {
 	gorm.Model
 	Avatar   string  // 头像图片路径
 	NickName string  // 昵称
@@ -34,11 +24,10 @@ type PetGroomer struct {
 
 	Specialty string // 专业擅长: 猫咪清理，洁牙等
 	AccountID uint   `gorm:"not null;unique"`
-	Account   AccountInfo
 }
 
 // PetHouse 宠物门店
-type PetHouse struct {
+type TuPethouse struct {
 	gorm.Model
 	Avatar   string  // 头像图片路径
 	NickName string  // 昵称
@@ -60,5 +49,4 @@ type PetHouse struct {
 
 	WorkScope string // 业务范围: 猫咪洗护，猫狗寄养等
 	AccountID uint   `gorm:"not null;unique"`
-	Account   AccountInfo
 }

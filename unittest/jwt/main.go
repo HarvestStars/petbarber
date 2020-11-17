@@ -28,11 +28,13 @@ func main() {
 
 	//或者用下面自定义claim
 	claims := jwt.MapClaims{
-		"user_type":  "groomer",
-		"account_id": "3",
-		"exp":        time.Now().Add(time.Duration(maxAge) * time.Second).Unix(), // 过期时间，必须设置,
+		"key":   "testing",
+		"id":    1,
+		"phone": 13988888888,
+		"utype": 0,
+		"exp":   time.Now().Add(time.Duration(maxAge) * time.Second).Unix(), // 过期时间，必须设置
+		"iat":   time.Now().Unix(),                                          // 当前时间
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(SECRETKEY))
 	if err != nil {
