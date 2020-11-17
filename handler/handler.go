@@ -27,8 +27,7 @@ func UploadGroomer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 		return
 	}
-	accountID := tokenPayload["id"].(uint)
-	//accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
+	accountID := uint(tokenPayload["id"].(float64))
 
 	var groomer db.TuGroomer
 	err = c.Bind(&groomer)
@@ -63,8 +62,7 @@ func UploadHouse(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 		return
 	}
-	accountID := tokenPayload["id"].(uint)
-	//accountID, _ := strconv.ParseUint(accountIDStr, 10, 32)
+	accountID := uint(tokenPayload["id"].(float64))
 
 	var house db.TuPethouse
 	err = c.Bind(&house)
@@ -99,8 +97,8 @@ func UploadImage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": err.Error()})
 		return
 	}
-	userType := tokenPayload["utype"].(int)
-	accountID := tokenPayload["id"].(uint)
+	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
 
 	imageType := c.Query("image_type")
 	switch imageType {
@@ -139,6 +137,10 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "certificate":
+		if userType != 2 {
+			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "jwt usertype error"})
+			return
+		}
 		var groomer db.TuGroomer
 		groomerAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
@@ -173,6 +175,10 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "house_license":
+		if userType != 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "jwt usertype error"})
+			return
+		}
 		var house db.TuPethouse
 		houseAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)

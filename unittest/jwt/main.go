@@ -31,7 +31,7 @@ func main() {
 		"key":   "testing",
 		"id":    1,
 		"phone": 13988888888,
-		"utype": 0,
+		"utype": 1,
 		"exp":   time.Now().Add(time.Duration(maxAge) * time.Second).Unix(), // 过期时间，必须设置
 		"iat":   time.Now().Unix(),                                          // 当前时间
 	}
