@@ -7,7 +7,7 @@ type TuGroomer struct {
 	gorm.Model
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
-	Rating   float32 // 星级
+	Favor    float32 // 星级
 
 	// 身份证信息
 	Name         string // 实名
@@ -31,7 +31,7 @@ type TuPethouse struct {
 	gorm.Model
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
-	Rating   float32 // 星级
+	Favor    float32 // 星级
 
 	// 身份证信息
 	Name         string // 实名
