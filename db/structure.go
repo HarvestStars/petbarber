@@ -8,6 +8,7 @@ type TuGroomer struct {
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
 	Favor    float32 // 星级
+	status   int     // 状态
 
 	// 身份证信息
 	Name         string // 实名
@@ -32,6 +33,7 @@ type TuPethouse struct {
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
 	Favor    float32 // 星级
+	status   int     // 状态
 
 	// 身份证信息
 	Name         string // 实名
