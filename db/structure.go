@@ -26,7 +26,7 @@ type TuGroomer struct {
 	CertificateBack    string `gorm:"text"` // 资质证明背面图片路径
 
 	Specialty string `gorm:"text"`            // 专业擅长: 猫咪清理，洁牙等
-	AccountID uint   `gorm:"not null;unique"` // account)user表主键
+	AccountID uint   `gorm:"not null;unique"` // account_user表主键
 }
 
 // PetHouse 宠物门店
@@ -56,5 +56,5 @@ type TuPethouse struct {
 	Location          string `gorm:"text"` // 门店地址
 
 	WorkScope string `gorm:"text"`            // 业务范围: 猫咪洗护，猫狗寄养等
-	AccountID uint   `gorm:"not null;unique"` // account)user表主键
+	AccountID uint   `gorm:"not null;unique"` // account_user表主键
 }
