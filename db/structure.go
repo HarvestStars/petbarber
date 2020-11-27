@@ -9,7 +9,7 @@ type TuGroomer struct {
 
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
-	Favor    float32 // 星级
+	Favor    float32 // 星级评分
 	Status   int     // 状态
 
 	// 身份证信息
@@ -25,8 +25,8 @@ type TuGroomer struct {
 	CertificateFront   string `gorm:"text"` // 资质证明正面图片路径
 	CertificateBack    string `gorm:"text"` // 资质证明背面图片路径
 
-	Specialty string `gorm:"text"` // 专业擅长: 猫咪清理，洁牙等
-	AccountID uint   `gorm:"not null;unique"`
+	Specialty string `gorm:"text"`            // 专业擅长: 猫咪清理，洁牙等
+	AccountID uint   `gorm:"not null;unique"` // account)user表主键
 }
 
 // PetHouse 宠物门店
@@ -38,7 +38,7 @@ type TuPethouse struct {
 
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
-	Favor    float32 // 星级
+	Favor    float32 // 星级评分
 	Status   int     // 状态
 
 	// 身份证信息
@@ -55,6 +55,6 @@ type TuPethouse struct {
 	License           string `gorm:"text"` // 营业执照照片路径
 	Location          string `gorm:"text"` // 门店地址
 
-	WorkScope string `gorm:"text"` // 业务范围: 猫咪洗护，猫狗寄养等
-	AccountID uint   `gorm:"not null;unique"`
+	WorkScope string `gorm:"text"`            // 业务范围: 猫咪洗护，猫狗寄养等
+	AccountID uint   `gorm:"not null;unique"` // account)user表主键
 }
