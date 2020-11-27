@@ -4,7 +4,7 @@ package db
 type TuGroomer struct {
 	//gorm.Model
 	ID        uint  `gorm:"primary_key"`
-	CreatedAt int64 // utc时间戳 精确到秒
+	CreatedAt int64 // utc时间戳 精确到毫秒
 	UpdatedAt int64
 
 	Avatar   string  `gorm:"text"` // 头像图片路径
@@ -33,7 +33,7 @@ type TuGroomer struct {
 type TuPethouse struct {
 	//gorm.Model
 	ID        uint  `gorm:"primary_key"`
-	CreatedAt int64 // utc时间戳 精确到秒
+	CreatedAt int64 // utc时间戳 精确到毫秒
 	UpdatedAt int64
 
 	Avatar   string  `gorm:"text"` // 头像图片路径

@@ -40,14 +40,14 @@ func UploadGroomer(c *gin.Context) {
 	db.DataBase.Model(&db.TuGroomer{}).Where("account_id = ?", accountID).Count(&count)
 	if count != 0 {
 		// exist
-		groomer.UpdatedAt = time.Now().UTC().Unix()
+		groomer.UpdatedAt = time.Now().UTC().UnixNano() / 1e6
 		db.DataBase.Model(&db.TuGroomer{}).Where("account_id = ?", accountID).Update(&groomer)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
 	} else {
 		// create
 		groomer.AccountID = accountID
-		groomer.CreatedAt = time.Now().UTC().Unix()
-		groomer.UpdatedAt = time.Now().UTC().Unix()
+		groomer.CreatedAt = time.Now().UTC().Unix() / 1e6
+		groomer.UpdatedAt = time.Now().UTC().Unix() / 1e6
 		db.DataBase.Create(&groomer)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "创建成功"})
 	}
@@ -78,14 +78,14 @@ func UploadHouse(c *gin.Context) {
 	db.DataBase.Model(&db.TuPethouse{}).Where("account_id = ?", accountID).Count(&count)
 	if count != 0 {
 		// exist
-		house.UpdatedAt = time.Now().UTC().Unix()
+		house.UpdatedAt = time.Now().UTC().Unix() / 1e6
 		db.DataBase.Model(&db.TuPethouse{}).Where("account_id = ?", accountID).Update(&house)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
 	} else {
 		// create
 		house.AccountID = accountID
-		house.CreatedAt = time.Now().UTC().Unix()
-		house.UpdatedAt = time.Now().UTC().Unix()
+		house.CreatedAt = time.Now().UTC().Unix() / 1e6
+		house.UpdatedAt = time.Now().UTC().Unix() / 1e6
 		db.DataBase.Create(&house)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "创建成功"})
 	}
@@ -176,7 +176,7 @@ func UploadImage(c *gin.Context) {
 			return
 		}
 		db.DataBase.Model(&groomer).Update(db.TuGroomer{
-			UpdatedAt:        time.Now().UTC().Unix(),
+			UpdatedAt:        time.Now().UTC().Unix() / 1e6,
 			CertificateFront: setting.ImagePathSetting.GroomerCertificatePath + fileNameFront,
 			CertificateBack:  setting.ImagePathSetting.GroomerCertificatePath + fileNameBack})
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
@@ -225,7 +225,7 @@ func UploadImage(c *gin.Context) {
 			return
 		}
 		db.DataBase.Model(&house).Update(db.TuPethouse{
-			UpdatedAt:         time.Now().UTC().Unix(),
+			UpdatedAt:         time.Now().UTC().Unix() / 1e6,
 			EnvironmentFront:  setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
 			EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
 			License:           setting.ImagePathSetting.HouseLicensePath + fileNameFront})
@@ -255,7 +255,7 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 			return errors.New("头像大小不能超过3M")
 		}
 		db.DataBase.Model(&house).Update(db.TuPethouse{
-			UpdatedAt: time.Now().UTC().Unix(),
+			UpdatedAt: time.Now().UTC().Unix() / 1e6,
 			Avatar:    setting.ImagePathSetting.AvatarPath + fileNameFront})
 		return nil
 	case 2:
@@ -270,7 +270,7 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 			return errors.New("头像大小不能超过3M")
 		}
 		db.DataBase.Model(&groomer).Update(db.TuGroomer{
-			UpdatedAt: time.Now().UTC().Unix(),
+			UpdatedAt: time.Now().UTC().Unix() / 1e6,
 			Avatar:    setting.ImagePathSetting.AvatarPath + fileNameFront})
 		return nil
 	default:
@@ -299,7 +299,7 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 			return errors.New("图片大小不能超过5M")
 		}
 		db.DataBase.Model(&house).Update(db.TuPethouse{
-			UpdatedAt:    time.Now().UTC().Unix(),
+			UpdatedAt:    time.Now().UTC().Unix() / 1e6,
 			IDCardNumber: IDCardNumber,
 			IDCardFront:  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
 			IDCardBack:   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
@@ -320,7 +320,7 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 			return errors.New("图片大小不能超过5M")
 		}
 		db.DataBase.Model(&groomer).Update(db.TuGroomer{
-			UpdatedAt:    time.Now().UTC().Unix(),
+			UpdatedAt:    time.Now().UTC().Unix() / 1e6,
 			IDCardNumber: IDCardNumber,
 			IDCardFront:  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
 			IDCardBack:   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
