@@ -1,10 +1,12 @@
 package db
 
-import "github.com/jinzhu/gorm"
-
 // PetGroomer 宠物美容师
 type TuGroomer struct {
-	gorm.Model
+	//gorm.Model
+	ID        uint  `gorm:"primary_key"`
+	CreatedAt int64 // utc时间戳 精确到秒
+	UpdatedAt int64
+
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
 	Favor    float32 // 星级
@@ -29,7 +31,11 @@ type TuGroomer struct {
 
 // PetHouse 宠物门店
 type TuPethouse struct {
-	gorm.Model
+	//gorm.Model
+	ID        uint  `gorm:"primary_key"`
+	CreatedAt int64 // utc时间戳 精确到秒
+	UpdatedAt int64
+
 	Avatar   string  `gorm:"text"` // 头像图片路径
 	NickName string  // 昵称
 	Favor    float32 // 星级
