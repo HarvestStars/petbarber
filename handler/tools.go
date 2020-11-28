@@ -78,7 +78,7 @@ func ParseToken(tokenString string) (jwt.MapClaims, error) {
 		}
 
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return []byte(setting.JwtSetting.SecretKey), nil
+		return []byte(setting.JwtSetting.JwtKey), nil
 	})
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil

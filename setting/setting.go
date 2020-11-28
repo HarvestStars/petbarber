@@ -33,7 +33,8 @@ type ImagePathConf struct {
 var ImagePathSetting = &ImagePathConf{}
 
 type JwtConf struct {
-	SecretKey string
+	JwtKey string
+	SmsKey string
 }
 
 var JwtSetting = &JwtConf{}
@@ -48,7 +49,7 @@ func Setup() {
 	mapTo(cfg, "mysql", MySQLSetting)
 	mapTo(cfg, "server", ServerSetting)
 	mapTo(cfg, "image", ImagePathSetting)
-	mapTo(cfg, "jwt", JwtSetting)
+	mapTo(cfg, "keys", JwtSetting)
 }
 
 func mapTo(cfg *ini.File, section string, v interface{}) {

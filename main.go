@@ -18,8 +18,12 @@ func main() {
 	// 开启服务
 	r := gin.Default()
 
-	// for general users
-	// 提交注册，修改资料
+	// 注册与登录
+	r.GET("/api/v1/account/smscode/:phone", handler.SendSmsCode)
+	r.GET("/api/v1/account/smscode/signin_or_signup", handler.SigninOrSignup)
+	// 订单业务
+
+	// 上传资料
 	r.POST("/api/v1/account/uploadgroomer", handler.UploadGroomer) // 美容师信息页 非图片类信息上传
 	r.POST("/api/v1/account/uploadhouse", handler.UploadHouse)     // 门店信息页 非图片类信息上传
 	r.POST("/api/v1/account/uploadimage", handler.UploadImage)     // 门店与美容师 图片类信息上传

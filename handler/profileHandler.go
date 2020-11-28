@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/HarvestStars/petbarber/db"
+	"github.com/HarvestStars/petbarber/dtos"
 	"github.com/HarvestStars/petbarber/setting"
 	"github.com/gin-gonic/gin"
 )
@@ -30,18 +31,18 @@ func UploadGroomer(c *gin.Context) {
 	}
 	accountID := uint(tokenPayload["id"].(float64))
 
-	var groomer db.TuGroomer
+	var groomer dtos.TuGroomer
 	err = c.Bind(&groomer)
 	if err != nil {
 		log.Print(err.Error())
 		return
 	}
 	count := 0
-	db.DataBase.Model(&db.TuGroomer{}).Where("account_id = ?", accountID).Count(&count)
+	db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", accountID).Count(&count)
 	if count != 0 {
 		// exist
 		groomer.UpdatedAt = time.Now().UTC().UnixNano() / 1e6
-		db.DataBase.Model(&db.TuGroomer{}).Where("account_id = ?", accountID).Update(&groomer)
+		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", accountID).Update(&groomer)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
 	} else {
 		// create
@@ -68,18 +69,18 @@ func UploadHouse(c *gin.Context) {
 	}
 	accountID := uint(tokenPayload["id"].(float64))
 
-	var house db.TuPethouse
+	var house dtos.TuPethouse
 	err = c.Bind(&house)
 	if err != nil {
 		log.Print(err.Error())
 		return
 	}
 	count := 0
-	db.DataBase.Model(&db.TuPethouse{}).Where("account_id = ?", accountID).Count(&count)
+	db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).Count(&count)
 	if count != 0 {
 		// exist
 		house.UpdatedAt = time.Now().UTC().Unix() / 1e6
-		db.DataBase.Model(&db.TuPethouse{}).Where("account_id = ?", accountID).Update(&house)
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).Update(&house)
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
 	} else {
 		// create
@@ -148,7 +149,7 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
 			return
 		}
-		var groomer db.TuGroomer
+		var groomer dtos.TuGroomer
 		groomerAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
 		if groomerAccount == 0 {
@@ -175,7 +176,7 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
-		db.DataBase.Model(&groomer).Update(db.TuGroomer{
+		db.DataBase.Model(&groomer).Update(dtos.TuGroomer{
 			UpdatedAt:        time.Now().UTC().Unix() / 1e6,
 			CertificateFront: setting.ImagePathSetting.GroomerCertificatePath + fileNameFront,
 			CertificateBack:  setting.ImagePathSetting.GroomerCertificatePath + fileNameBack})
@@ -187,7 +188,7 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
 			return
 		}
-		var house db.TuPethouse
+		var house dtos.TuPethouse
 		houseAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
 		if houseAccount == 0 {
@@ -224,7 +225,7 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
-		db.DataBase.Model(&house).Update(db.TuPethouse{
+		db.DataBase.Model(&house).Update(dtos.TuPethouse{
 			UpdatedAt:         time.Now().UTC().Unix() / 1e6,
 			EnvironmentFront:  setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
 			EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
@@ -244,7 +245,7 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 	case 0:
 		return errors.New("请先确定职业身份")
 	case 1:
-		var house db.TuPethouse
+		var house dtos.TuPethouse
 		houseAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
 		if houseAccount == 0 {
@@ -254,12 +255,12 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 		if err != nil {
 			return errors.New("头像大小不能超过3M")
 		}
-		db.DataBase.Model(&house).Update(db.TuPethouse{
+		db.DataBase.Model(&house).Update(dtos.TuPethouse{
 			UpdatedAt: time.Now().UTC().Unix() / 1e6,
 			Avatar:    setting.ImagePathSetting.AvatarPath + fileNameFront})
 		return nil
 	case 2:
-		var groomer db.TuGroomer
+		var groomer dtos.TuGroomer
 		groomerAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
 		if groomerAccount == 0 {
@@ -269,7 +270,7 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 		if err != nil {
 			return errors.New("头像大小不能超过3M")
 		}
-		db.DataBase.Model(&groomer).Update(db.TuGroomer{
+		db.DataBase.Model(&groomer).Update(dtos.TuGroomer{
 			UpdatedAt: time.Now().UTC().Unix() / 1e6,
 			Avatar:    setting.ImagePathSetting.AvatarPath + fileNameFront})
 		return nil
@@ -284,7 +285,7 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 	case 0:
 		return errors.New("请先确定职业身份")
 	case 1:
-		var house db.TuPethouse
+		var house dtos.TuPethouse
 		houseAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
 		if houseAccount == 0 {
@@ -298,14 +299,14 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 		if err != nil {
 			return errors.New("图片大小不能超过5M")
 		}
-		db.DataBase.Model(&house).Update(db.TuPethouse{
+		db.DataBase.Model(&house).Update(dtos.TuPethouse{
 			UpdatedAt:    time.Now().UTC().Unix() / 1e6,
 			IDCardNumber: IDCardNumber,
 			IDCardFront:  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
 			IDCardBack:   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
 		return nil
 	case 2:
-		var groomer db.TuGroomer
+		var groomer dtos.TuGroomer
 		groomerAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
 		if groomerAccount == 0 {
@@ -319,7 +320,7 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 		if err != nil {
 			return errors.New("图片大小不能超过5M")
 		}
-		db.DataBase.Model(&groomer).Update(db.TuGroomer{
+		db.DataBase.Model(&groomer).Update(dtos.TuGroomer{
 			UpdatedAt:    time.Now().UTC().Unix() / 1e6,
 			IDCardNumber: IDCardNumber,
 			IDCardFront:  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
