@@ -9,7 +9,9 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
+	"github.com/HarvestStars/petbarber/dtos"
 	"github.com/HarvestStars/petbarber/setting"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofrs/uuid"
@@ -22,6 +24,8 @@ type BaseInfo struct {
 	UserType    int    `json:"usertype"`
 }
 
+// -----------------------------------------------------------------------------profile-----------------------------------------------------------------------------
+// image
 func transferImage(file multipart.File, header *multipart.FileHeader, rootPath string) (string, error) {
 	// header调用Filename方法，就可以得到文件名
 	fileName := header.Filename
@@ -61,15 +65,40 @@ func transferImage(file multipart.File, header *multipart.FileHeader, rootPath s
 	return fileName, nil
 }
 
-func extractTokenFromAuth(auth string) (string, error) {
-	if strings.HasPrefix(auth, "Bearer ") {
-		token := auth[len("Bearer "):]
-		return token, nil
+// -----------------------------------------------------------------------------jwt-----------------------------------------------------------------------------
+// 生成Jwt
+func CreateJwtToken(user dtos.User) (dtos.Token, error) {
+	fmt.Print(setting.JwtSetting.JwtExpireTimeSec, "\n")
+	claims := jwt.MapClaims{
+		"key":   "testing",
+		"id":    user.UserID,
+		"phone": user.Phone,
+		"utype": user.UserType,
+		"exp":   time.Now().Add(time.Duration(setting.JwtSetting.JwtExpireTimeSec) * time.Second).Unix(), // 过期时间
+		"iat":   time.Now().Unix(),                                                                       // 当前时间
 	}
-	return auth, errors.New("token 格式不合法")
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(setting.JwtSetting.JwtKey))
+	if err != nil {
+		return dtos.Token{}, err
+	}
+	JwtToken := dtos.Token{AccessToken: tokenString, TokenType: "Bearer", ExpireAt: claims["exp"].(int64)}
+	return JwtToken, nil
 }
 
-//解析token
+// 更新Jwt
+func RefreshJwtToken(claims jwt.MapClaims) (dtos.Token, error) {
+	claims["exp"] = time.Now().Add(time.Duration(setting.JwtSetting.JwtExpireTimeSec) * time.Second).Unix()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(setting.JwtSetting.JwtKey))
+	if err != nil {
+		return dtos.Token{}, err
+	}
+	JwtToken := dtos.Token{AccessToken: tokenString, TokenType: "Bearer", ExpireAt: claims["exp"].(int64)}
+	return JwtToken, nil
+}
+
+// 解析Jwt
 func ParseToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
@@ -85,4 +114,12 @@ func ParseToken(tokenString string) (jwt.MapClaims, error) {
 	} else {
 		return nil, err
 	}
+}
+
+func extractTokenFromAuth(auth string) (string, error) {
+	if strings.HasPrefix(auth, "Bearer ") {
+		token := auth[len("Bearer "):]
+		return token, nil
+	}
+	return auth, errors.New("token 格式不合法")
 }

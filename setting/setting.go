@@ -33,8 +33,9 @@ type ImagePathConf struct {
 var ImagePathSetting = &ImagePathConf{}
 
 type JwtConf struct {
-	JwtKey string
-	SmsKey string
+	JwtKey           string
+	SmsKey           string
+	JwtExpireTimeSec int64
 }
 
 var JwtSetting = &JwtConf{}
