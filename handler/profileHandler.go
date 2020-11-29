@@ -151,7 +151,7 @@ func UploadImage(c *gin.Context) {
 		}
 		var groomer dtos.TuGroomer
 		groomerAccount := 0
-		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
+		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
 		if groomerAccount == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "没有找到该美容师账户"})
 			return
@@ -190,7 +190,7 @@ func UploadImage(c *gin.Context) {
 		}
 		var house dtos.TuPethouse
 		houseAccount := 0
-		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
 		if houseAccount == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "没有找到该门店账户"})
 			return
@@ -247,7 +247,7 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 	case 1:
 		var house dtos.TuPethouse
 		houseAccount := 0
-		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
 		if houseAccount == 0 {
 			return errors.New("没有找到该门店账户")
 		}
@@ -262,7 +262,7 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 	case 2:
 		var groomer dtos.TuGroomer
 		groomerAccount := 0
-		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
+		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
 		if groomerAccount == 0 {
 			return errors.New("没有找到该美容师账户")
 		}
@@ -287,7 +287,7 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 	case 1:
 		var house dtos.TuPethouse
 		houseAccount := 0
-		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
 		if houseAccount == 0 {
 			return errors.New("没有找到该门店账户")
 		}
@@ -308,7 +308,7 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 	case 2:
 		var groomer dtos.TuGroomer
 		groomerAccount := 0
-		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
+		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
 		if groomerAccount == 0 {
 			return errors.New("没有找到该美容师账户")
 		}

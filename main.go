@@ -21,7 +21,7 @@ func main() {
 	// 注册与登录
 	r.GET("/api/v1/account/smscode/:phone", handler.SendSmsCode)
 	r.POST("/api/v1/account/smscode/signin_or_signup", handler.SigninOrSignup)
-	r.POST("/api/v1/account/smscode/test", handler.GetUserProfile)
+	r.GET("/api/v1/account/profile", handler.GetUserProfile)
 
 	// 更新jwt
 	r.GET("/api/v1/jwt/refresh", handler.RefreshAccessToken)

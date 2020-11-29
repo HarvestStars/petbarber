@@ -68,7 +68,6 @@ func transferImage(file multipart.File, header *multipart.FileHeader, rootPath s
 // -----------------------------------------------------------------------------jwt-----------------------------------------------------------------------------
 // 生成Jwt
 func CreateJwtToken(user dtos.User) (dtos.Token, error) {
-	fmt.Print(setting.JwtSetting.JwtExpireTimeSec, "\n")
 	claims := jwt.MapClaims{
 		"key":   "testing",
 		"id":    user.UserID,

@@ -96,5 +96,67 @@ func SigninOrSignup(c *gin.Context) {
 }
 
 func GetUserProfile(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"code": 0, "msg": "OK", "data": "校验通过", "detail": ""})
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	accountID := uint(tokenPayload["id"].(float64))
+	jwtUserType := int(tokenPayload["utype"].(float64))
+	phone := tokenPayload["phone"].(string)
+
+	reqUserType := c.Query("utype")
+	count := 0
+	switch reqUserType {
+	case "PetHouse":
+		var house dtos.TuPethouse
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).Count(&count).First(&house)
+		if count == 0 {
+			// create
+			house.AccountID = accountID
+			house.CreatedAt = time.Now().UTC().UnixNano() / 1e6
+			db.DataBase.Create(&house)
+		}
+		if jwtUserType != 1 {
+			// 该身份的第一次登陆, 同时更新account表
+			db.DataBase.Model(&dtos.TuAccount{}).Where("id = ?", accountID).UpdateColumns(dtos.TuAccount{UserType: 1, UpdatedAt: time.Now().UTC().UnixNano() / 1e6})
+		}
+
+		token, err := CreateJwtToken(dtos.User{UserID: accountID, Phone: phone, UserType: jwtUserType})
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_CREATE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": dtos.UserPetHouseProfileRep{User: house, Token: token}, "detail": ""})
+
+	case "Groomer":
+		var groomer dtos.TuGroomer
+		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", accountID).Count(&count).First(&groomer)
+		if count == 0 {
+			// create
+			groomer.AccountID = accountID
+			groomer.CreatedAt = time.Now().UTC().UnixNano() / 1e6
+			db.DataBase.Create(&groomer)
+		}
+		if jwtUserType != 2 {
+			// 该身份的第一次登陆, 同时更新account表
+			db.DataBase.Model(&dtos.TuGroomer{}).Where("id = ?", accountID).Update("user_type", 2)
+		}
+
+		token, err := CreateJwtToken(dtos.User{UserID: accountID, Phone: phone, UserType: jwtUserType})
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_CREATE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": dtos.UserGroomerProfileRep{User: groomer, Token: token}, "detail": ""})
+
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+	}
 }
