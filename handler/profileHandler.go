@@ -21,12 +21,12 @@ func UploadGroomer(c *gin.Context) {
 	auth := c.Request.Header.Get("authorization")
 	tokenStr, err := extractTokenFromAuth(auth)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	tokenPayload, err := ParseToken(tokenStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	accountID := uint(tokenPayload["id"].(float64))
@@ -43,14 +43,14 @@ func UploadGroomer(c *gin.Context) {
 		// exist
 		groomer.UpdatedAt = time.Now().UTC().UnixNano() / 1e6
 		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", accountID).Update(&groomer)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
 	} else {
 		// create
 		groomer.AccountID = accountID
 		groomer.CreatedAt = time.Now().UTC().UnixNano() / 1e6
 		groomer.UpdatedAt = time.Now().UTC().UnixNano() / 1e6
 		db.DataBase.Create(&groomer)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "创建成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "创建成功"})
 	}
 }
 
@@ -59,12 +59,12 @@ func UploadHouse(c *gin.Context) {
 	auth := c.Request.Header.Get("authorization")
 	tokenStr, err := extractTokenFromAuth(auth)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	tokenPayload, err := ParseToken(tokenStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	accountID := uint(tokenPayload["id"].(float64))
@@ -81,14 +81,14 @@ func UploadHouse(c *gin.Context) {
 		// exist
 		house.UpdatedAt = time.Now().UTC().UnixNano() / 1e6
 		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).Update(&house)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
 	} else {
 		// create
 		house.AccountID = accountID
 		house.CreatedAt = time.Now().UTC().UnixNano() / 1e6
 		house.UpdatedAt = time.Now().UTC().UnixNano() / 1e6
 		db.DataBase.Create(&house)
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "创建成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "创建成功"})
 	}
 }
 
@@ -97,12 +97,12 @@ func UploadImage(c *gin.Context) {
 	auth := c.Request.Header.Get("authorization")
 	tokenStr, err := extractTokenFromAuth(auth)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	tokenPayload, err := ParseToken(tokenStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	userType := int(tokenPayload["utype"].(float64))
@@ -113,32 +113,32 @@ func UploadImage(c *gin.Context) {
 	case "avatar":
 		fileFront, headerFront, err := c.Request.FormFile("avatar")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		err = UploadAvatar(accountID, fileFront, headerFront, userType)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
 		return
 
 	case "id_card":
 		IDCardNumber := c.Request.PostFormValue("id_card_number")
 		fileFront, headerFront, err := c.Request.FormFile("id-front")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		fileBack, headerBack, err := c.Request.FormFile("id-back")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		err = UploadIDCard(accountID, IDCardNumber, fileFront, headerFront, fileBack, headerBack, userType)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
@@ -146,83 +146,83 @@ func UploadImage(c *gin.Context) {
 
 	case "certificate":
 		if userType != 2 {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
 			return
 		}
 		var groomer dtos.TuGroomer
 		groomerAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&groomer).Count(&groomerAccount)
 		if groomerAccount == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "", "detail": "没有找到该美容师账户"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "没有找到该美容师账户"})
 			return
 		}
 		fileFront, headerFront, err := c.Request.FormFile("certifi-front")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		fileBack, headerBack, err := c.Request.FormFile("certifi-back")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerCertificatePath)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
 		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerCertificatePath)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
 		db.DataBase.Model(&groomer).Update(dtos.TuGroomer{
 			UpdatedAt:        time.Now().UTC().UnixNano() / 1e6,
 			CertificateFront: setting.ImagePathSetting.GroomerCertificatePath + fileNameFront,
 			CertificateBack:  setting.ImagePathSetting.GroomerCertificatePath + fileNameBack})
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
 		return
 
 	case "house_license":
 		if userType != 1 {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
 			return
 		}
 		var house dtos.TuPethouse
 		houseAccount := 0
 		db.DataBase.Where("account_id = ?", accountID).First(&house).Count(&houseAccount)
 		if houseAccount == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "", "detail": "没有找到该门店账户"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "没有找到该门店账户"})
 			return
 		}
 		fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment-front")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment-inside")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		fileFront, headerFront, err := c.Request.FormFile("license-front")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 401, "msg": "Sorry", "data": "", "detail": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
 		fileNameEnvFront, err := transferImage(fileEnvFront, headerEnvFront, setting.ImagePathSetting.HouseEnvironmentPath)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
 		fileNameEnvIn, err := transferImage(fileEnvIn, headerEnvIn, setting.ImagePathSetting.HouseEnvironmentPath)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": 403, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
 		db.DataBase.Model(&house).Update(dtos.TuPethouse{
@@ -230,11 +230,11 @@ func UploadImage(c *gin.Context) {
 			EnvironmentFront:  setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
 			EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
 			License:           setting.ImagePathSetting.HouseLicensePath + fileNameFront})
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
 		return
 
 	default:
-		c.JSON(http.StatusBadRequest, gin.H{"code": 404, "msg": "Sorry", "data": "", "detail": "未知请求"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.UNKNOW_REQUEST, "msg": "Sorry", "data": "", "detail": "未知请求"})
 		return
 	}
 }
