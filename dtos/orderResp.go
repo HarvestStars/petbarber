@@ -20,8 +20,9 @@ type PaymentInfo struct {
 }
 
 type Detail struct {
-	Basic      float32 `json:"basic"`
-	Commission int     `json:"commission"`
+	Basic        float32 `json:"basic"`
+	Commission   int     `json:"commission"`
+	TotalPayment float32 `json:"total_pay"`
 }
 
 type Children struct {
@@ -41,7 +42,7 @@ func (order *PCOrderResp) RespTransfer(requirementOrder ToRequirement, matchOrde
 	if err != nil {
 		return err
 	}
-	detail := Detail{Basic: requirementOrder.Basic, Commission: requirementOrder.Commission}
+	detail := Detail{Basic: requirementOrder.Basic, Commission: requirementOrder.Commission, TotalPayment: requirementOrder.TotalPayment}
 	order.Payment = PaymentInfo{Mode: payModeInt, Detail: detail}
 	order.Children = Children{MatchOrder: matchOrder, Groomer: groomer}
 	order.UserID = requirementOrder.UserID
@@ -93,4 +94,16 @@ func (order *PCMatchResp) RespTransfer(matchOrder ToMatch, requirementOrder ToRe
 	order.PethouseOrderID = requirementOrder.ID
 	order.UserID = matchOrder.UserID
 	return nil
+}
+
+type PageInfo struct {
+	TotalItems int `json:"total_items"`
+	TotalPages int `json:"total_pages"`
+	PageSize   int `json:"page_size"`
+	PageIndex  int `json:"page_index"`
+}
+
+type PCOrderListResp struct {
+	List     []PCOrderResp `json:"lists"`
+	PageInfo PageInfo      `json:"pagination"`
 }

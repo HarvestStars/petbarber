@@ -3,6 +3,7 @@ package dtos
 const (
 	OK             = 0
 	UNKNOW_REQUEST = 1
+	URL_ERROR      = 2
 
 	IMAGE_FETCH_ERROR  = 100
 	IMAGE_UPLOAD_ERROR = 101

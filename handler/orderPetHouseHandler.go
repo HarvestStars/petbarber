@@ -78,7 +78,6 @@ func PetHouseCreateOrder(c *gin.Context) {
 	//tx.Model(&dtos.TuGroomer{}).Where("pethouse_order_id = ?", requirementOrder.ID).First(&matchOrder)
 	tx.Commit()
 	var orderResp dtos.PCOrderResp
-
 	err = orderResp.RespTransfer(requirementOrder, matchOrder, groomer)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_PAYMENT_DATA_MISSION, "msg": "Sorry", "data": "", "detail": err.Error()})
@@ -227,7 +226,59 @@ func PetHouseDenyUserOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "成功拒绝该美容师"})
 }
 
-func PetHouseGetOrderList(c *gin.Context) {}
+func PetHouseGetOrderList(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	if userType != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETHOUSE_TOKEN"})
+		return
+	}
+
+	pageSize, err := strconv.Atoi(c.Query("page_size"))
+	pageIndex, err := strconv.Atoi(c.Query("page_index"))
+	//lastOrderID, err := strconv.ParseUint(c.Query("last_order_id"), 10, 32)
+	orderStatus, err := strconv.Atoi(c.Query("order_status"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	var requirementOrders []dtos.ToRequirement
+	count := 0
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ?", orderStatus).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
+
+	var listResp []dtos.PCOrderResp
+	for _, order := range requirementOrders {
+		var matchOrder dtos.ToMatch
+		db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", order.MatchOrderID).First(&matchOrder)
+		var groomer dtos.TuGroomer
+		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).First(&groomer)
+		var orderResp dtos.PCOrderResp
+		err = orderResp.RespTransfer(order, matchOrder, groomer)
+		if err == nil {
+			listResp = append(listResp, orderResp)
+		}
+	}
+
+	var orderListResp dtos.PCOrderListResp
+	orderListResp.List = listResp
+	orderListResp.PageInfo = dtos.PageInfo{
+		TotalItems: count,
+		TotalPages: count/pageSize + 1,
+		PageSize:   pageSize,
+		PageIndex:  pageIndex,
+	}
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderListResp, "detail": ""})
+}
 
 func PetHousGetOrder(c *gin.Context) {}
 
