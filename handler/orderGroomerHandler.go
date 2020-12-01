@@ -29,7 +29,7 @@ func GroomerCreateOrder(c *gin.Context) {
 		return
 	}
 
-	requirementOrderID, err := strconv.Atoi(c.Param("bizOrderID"))
+	requirementOrderID, err := strconv.ParseUint(c.Param("bizOrderID"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": "ORDER_BIZ_ID_WRONG" + err.Error()})
 		return
@@ -39,7 +39,7 @@ func GroomerCreateOrder(c *gin.Context) {
 	db.DataBase.Model(&dtos.ToRequirement{}).Where("id = ?", requirementOrderID).Count(&requireCount).First(&requirementOrder)
 	if requireCount == 0 {
 		// 没有该需求订单
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": "DB中无该需求订单"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": "requirement中无该订单"})
 		return
 	}
 	if requirementOrder.Status != dtos.NEW {
@@ -92,7 +92,7 @@ func GroomerCancelOrder(c *gin.Context) {
 	}
 
 	orderIDStr := c.Param("orderID")
-	orderID, err := strconv.Atoi(orderIDStr)
+	orderID, err := strconv.ParseUint(orderIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return

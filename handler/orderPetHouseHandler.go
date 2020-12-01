@@ -105,7 +105,7 @@ func PetHouseCancelOrder(c *gin.Context) {
 		return
 	}
 	orderIDStr := c.Param("orderID")
-	orderID, err := strconv.Atoi(orderIDStr)
+	orderID, err := strconv.ParseUint(orderIDStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
@@ -133,12 +133,15 @@ func PetHouseCancelOrder(c *gin.Context) {
 	case dtos.RUNNING:
 		// RUNNING 取消
 		// 十分钟校验
-		if (requirementOrder.CreatedAt/1e3 + 600) < time.Now().UTC().Unix() {
+		var matchOrder dtos.ToMatch
+		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).First(&matchOrder)
+		if (matchOrder.CreatedAt/1e3 + 600) < time.Now().UTC().Unix() {
 			// 超出可取消时间
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "被接单已经超过10分钟"})
 			tx.Commit()
 			return
 		}
+
 		// match 和 requirement 双表联动取消
 		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).UpdateColumns(dtos.ToMatch{
 			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
@@ -157,7 +160,72 @@ func PetHouseCancelOrder(c *gin.Context) {
 	}
 }
 
-func PetHouseDenyUserOrder(c *gin.Context) {}
+func PetHouseDenyUserOrder(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	if userType != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETHOUSE_TOKEN"})
+		return
+	}
+
+	petHouseOrderID, err := strconv.ParseUint(c.Param("pethouseOrderID"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	// groomerID, err := strconv.ParseUint(c.Param("groomerUserID"), 10, 32)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_GROOMER_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+	// 	return
+	// }
+
+	// 启动事务
+	tx := db.DataBase.Begin()
+	defer tx.Commit()
+	count := 0
+	var requirementOrder dtos.ToRequirement
+	tx.Model(&dtos.ToRequirement{}).Where("id = ?", petHouseOrderID).Count(&count).First(&requirementOrder)
+	if count == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": "requirement中无该订单"})
+		return
+	}
+	if requirementOrder.Status != dtos.RUNNING {
+		// 不在可以deny的状态
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "订单不在RUNNING状态"})
+		return
+	}
+
+	var matchOrder dtos.ToMatch
+	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).Count(&count).First(&matchOrder)
+	if count == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": "match中无该订单"})
+		return
+	}
+	if (matchOrder.CreatedAt/1e3 + 600) < time.Now().UTC().Unix() {
+		// 已被接单超过10分钟
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "被该美容师接单已经超过10分钟"})
+		return
+	}
+	tx.Model(&dtos.ToRequirement{}).Where("id = ?", petHouseOrderID).UpdateColumns(map[string]interface{}{
+		"updated_at":     time.Now().UTC().UnixNano() / 1e6,
+		"status":         dtos.NEW,
+		"match_order_id": 0})
+
+	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).UpdateColumns(dtos.ToMatch{
+		UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
+		Status:    dtos.CANCELGROOMER})
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "成功拒绝该美容师"})
+}
 
 func PetHouseGetOrderList(c *gin.Context) {}
 
