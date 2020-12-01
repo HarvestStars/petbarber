@@ -71,6 +71,7 @@ func SigninOrSignup(c *gin.Context) {
 	}
 
 	// orm action
+	// 需要添加角色切换功能，目前角色选定后不可更改
 	var account dtos.TuAccount
 	count := 0
 	db.DataBase.Model(&dtos.TuAccount{}).Where("account = ?", signInReq.Phone).Count(&count).First(&account)
