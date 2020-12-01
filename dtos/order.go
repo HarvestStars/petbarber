@@ -12,11 +12,14 @@ type ToRequirement struct {
 	ServiceItemsDesc string `gorm:"type:varchar(512)"`
 
 	PayMode      int     // 付费模式
+	Basic        float32 // 底薪
+	Commission   int     // 提成
 	PayModeDesc  string  `gorm:"type:varchar(512)"`
 	TotalPayment float32 // 总费用
 	Desc         string  `gorm:"type:varchar(512)"`
 	OrderType    int     // 订单类型 洗剪吹, 遛狗
 	Status       int     // 订单状态
+	MatchOrderID uint    // 美容师接单号
 	UserID       uint    // 门店id
 }
 
@@ -43,6 +46,6 @@ type ToMatch struct {
 	CreatedAt       int64 `json:"created_at"` // utc时间戳 精确到毫秒
 	UpdatedAt       int64 `json:"updated_at"`
 	Status          int   `json:"status"`            // 订单状态
-	PethouseOrderID int64 `json:"pethouse_order_id"` // 门店订单号
+	PethouseOrderID uint  `json:"pethouse_order_id"` // 门店订单号
 	UserID          uint  `json:"user_id"`           // 美容师id
 }

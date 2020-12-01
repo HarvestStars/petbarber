@@ -129,7 +129,7 @@ func GetUserProfile(c *gin.Context) {
 			db.DataBase.Model(&dtos.TuAccount{}).Where("id = ?", accountID).UpdateColumns(dtos.TuAccount{UserType: 1, UpdatedAt: time.Now().UTC().UnixNano() / 1e6})
 		}
 
-		token, err := CreateJwtToken(dtos.User{UserID: accountID, Phone: phone, UserType: jwtUserType})
+		token, err := CreateJwtToken(dtos.User{UserID: accountID, Phone: phone, UserType: 1})
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_CREATE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
@@ -147,10 +147,10 @@ func GetUserProfile(c *gin.Context) {
 		}
 		if jwtUserType != 2 {
 			// 该身份的第一次登陆, 同时更新account表
-			db.DataBase.Model(&dtos.TuGroomer{}).Where("id = ?", accountID).Update("user_type", 2)
+			db.DataBase.Model(&dtos.TuAccount{}).Where("id = ?", accountID).UpdateColumns(dtos.TuAccount{UserType: 2, UpdatedAt: time.Now().UTC().UnixNano() / 1e6})
 		}
 
-		token, err := CreateJwtToken(dtos.User{UserID: accountID, Phone: phone, UserType: jwtUserType})
+		token, err := CreateJwtToken(dtos.User{UserID: accountID, Phone: phone, UserType: 2})
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_CREATE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return

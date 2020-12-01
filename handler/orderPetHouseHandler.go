@@ -23,7 +23,7 @@ func PetHouseCreateOrder(c *gin.Context) {
 	userType := int(tokenPayload["utype"].(float64))
 	accountID := uint(tokenPayload["id"].(float64))
 	if userType != 1 {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "jwt类型错误"})
 		return
 	}
 	var petHouseOrderReq dtos.CreatePetHousePCOrderReq
@@ -39,6 +39,9 @@ func PetHouseCreateOrder(c *gin.Context) {
 		requirementOrder.FinishedAt = petHouseOrderReq.FinishedAt
 		requirementOrder.ServiceBits = dtos.ToServiceBits(petHouseOrderReq.ServiceItems)
 		requirementOrder.ServiceItemsDesc = dtos.ToServiceDesc(petHouseOrderReq.ServiceItems)
+
+		requirementOrder.Basic = petHouseOrderReq.Basic
+		requirementOrder.Commission = petHouseOrderReq.Commission
 		payModeInt, err := dtos.ToPayMode(petHouseOrderReq.Basic, petHouseOrderReq.Commission)
 		payModeDesc, err := dtos.ToPayModeDesc(petHouseOrderReq.Basic, petHouseOrderReq.Commission)
 		if err != nil {
@@ -74,7 +77,7 @@ func PetHouseCreateOrder(c *gin.Context) {
 	tx.Commit()
 	var orderResp dtos.PCOrderResp
 
-	err = orderResp.RespTransfer(requirementOrder, matchOrder, groomer, petHouseOrderReq)
+	err = orderResp.RespTransfer(requirementOrder, matchOrder, groomer)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_PAYMENT_DATA_MISSION, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return

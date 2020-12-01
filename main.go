@@ -40,7 +40,7 @@ func main() {
 	r.GET("/api/v1/order/pethouse/getorder/:orderID", handler.PetHousGetOrder)
 	r.GET("/api/v1/order/pethouse/close/:orderID", handler.PetHouseCloseOrder)
 	// groomer
-	r.POST("/api/v1/order/groomer/create/:bizOrderID}", handler.GroomerCreateOrder)
+	r.POST("/api/v1/order/groomer/create/:bizOrderID", handler.GroomerCreateOrder)
 	r.DELETE("/api/v1/order/groomer/cancel/:orderID", handler.GroomerCancelOrder)
 	r.GET("/api/v1/order/groomer/list", handler.GroomerGetOrderList)
 	r.GET("/api/v1/order/groomer/active", handler.GroomerGetActivePethouseOrder)

@@ -1,6 +1,9 @@
 package dtos
 
-import "errors"
+import (
+	"errors"
+	"math"
+)
 
 type CreatePetHousePCOrderReq struct {
 	RequestedAt  int64   `json:"requested_at"`
@@ -17,6 +20,17 @@ func ToServiceBits(serviceItems []int) int64 {
 		bits |= 1 << v
 	}
 	return bits
+}
+
+func ToServiceItems(serviceBits int64) []int {
+	var serviceItems []int
+	for i := 0; i < 6; i++ {
+		serviceBits &= int64(math.Pow(2, float64(i)))
+		if serviceBits != int64(0) {
+			serviceItems = append(serviceItems, i)
+		}
+	}
+	return serviceItems
 }
 
 func ToServiceDesc(serviceItems []int) string {
