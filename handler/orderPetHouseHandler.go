@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/HarvestStars/petbarber/db"
 	"github.com/HarvestStars/petbarber/dtos"
@@ -34,7 +36,7 @@ func PetHouseCreateOrder(c *gin.Context) {
 	switch orderType {
 	case "WCB":
 		requirementOrder.UserID = accountID
-		requirementOrder.CreatedAt = petHouseOrderReq.RequestedAt
+		requirementOrder.CreatedAt = time.Now().UTC().UnixNano() / 1e6
 		requirementOrder.StartedAt = petHouseOrderReq.StartedAt
 		requirementOrder.FinishedAt = petHouseOrderReq.FinishedAt
 		requirementOrder.ServiceBits = dtos.ToServiceBits(petHouseOrderReq.ServiceItems)
@@ -85,7 +87,75 @@ func PetHouseCreateOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderResp, "detail": ""})
 }
 
-func PetHouseCancelOrder(c *gin.Context) {}
+func PetHouseCancelOrder(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	if userType != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETHOUSE_TOKEN"})
+		return
+	}
+	orderIDStr := c.Param("orderID")
+	orderID, err := strconv.Atoi(orderIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	orderCount := 0
+	var requirementOrder dtos.ToRequirement
+	tx := db.DataBase.Begin()
+	tx.Model(&dtos.ToRequirement{}).Where("id = ?", uint(orderID)).Count(&orderCount).First(&requirementOrder)
+	if orderCount == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "目标requirement订单不存在"})
+		return
+	}
+
+	switch requirementOrder.Status {
+	case dtos.NEW:
+		// NEW 取消
+		// 直接取消requirement表
+		tx.Model(&dtos.ToRequirement{}).Where("id = ?", uint(orderID)).UpdateColumns(dtos.ToRequirement{
+			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
+			Status:    dtos.CANCELORDER,
+		})
+		tx.Commit()
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "未被接单取消"})
+
+	case dtos.RUNNING:
+		// RUNNING 取消
+		// 十分钟校验
+		if (requirementOrder.CreatedAt/1e3 + 600) < time.Now().UTC().Unix() {
+			// 超出可取消时间
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "被接单已经超过10分钟"})
+			tx.Commit()
+			return
+		}
+		// match 和 requirement 双表联动取消
+		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).UpdateColumns(dtos.ToMatch{
+			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
+			Status:    dtos.CANCELORDER})
+
+		tx.Model(&dtos.ToRequirement{}).Where("id = ?", uint(orderID)).UpdateColumns(dtos.ToRequirement{
+			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
+			Status:    dtos.CANCELORDER,
+		})
+		tx.Commit()
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "10分钟内正常取消"})
+
+	default:
+		tx.Commit()
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "订单不为NEW或者RUNNING"})
+	}
+}
 
 func PetHouseDenyUserOrder(c *gin.Context) {}
 

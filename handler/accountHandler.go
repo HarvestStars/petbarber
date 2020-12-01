@@ -26,7 +26,7 @@ func SendSmsCode(c *gin.Context) {
 func createSmsCode(phone string) (string, int64) {
 	code := 1234 // random.randrange(1000,9999)
 	codeStr := strconv.Itoa(code)
-	expireAt := time.Now().Add(time.Duration(300) * time.Second).UTC().Unix()
+	expireAt := time.Now().Add(time.Duration(setting.JwtSetting.SmsExpireTimeSec) * time.Second).UTC().Unix()
 	expireAtStr := strconv.FormatInt(expireAt, 10)
 	expireAtHexStr := strconv.FormatInt(expireAt, 16)
 	msg := fmt.Sprintf("%s.%s.%s", phone, expireAtStr, codeStr)

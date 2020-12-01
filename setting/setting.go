@@ -36,6 +36,7 @@ type JwtConf struct {
 	JwtKey           string
 	SmsKey           string
 	JwtExpireTimeSec int64
+	SmsExpireTimeSec int
 }
 
 var JwtSetting = &JwtConf{}
