@@ -183,11 +183,6 @@ func PetHouseDenyUserOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
-	// groomerID, err := strconv.ParseUint(c.Param("groomerUserID"), 10, 32)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_GROOMER_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
-	// 	return
-	// }
 
 	// 启动事务
 	tx := db.DataBase.Begin()

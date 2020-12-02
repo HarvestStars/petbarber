@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/HarvestStars/petbarber/db"
@@ -59,7 +60,7 @@ func CreateOrderComment(c *gin.Context) {
 		var groomer dtos.TuGroomer
 		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).First(&groomer)
 		comment.ToUserID = groomer.AccountID
-		comment.CommentType = 2
+		comment.CommentType = 1
 		comment.Favor = commentReq.Favor
 		comment.Content = commentReq.Content
 		comment.PethouseOrderID = commentReq.OrderID
@@ -100,7 +101,7 @@ func CreateOrderComment(c *gin.Context) {
 		var petHouse dtos.TuPethouse
 		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).First(&petHouse)
 		comment.ToUserID = petHouse.AccountID
-		comment.CommentType = 1
+		comment.CommentType = 2
 		comment.Favor = commentReq.Favor
 		comment.Content = commentReq.Content
 		comment.PethouseOrderID = requirementOrder.ID
@@ -118,4 +119,51 @@ func CreateOrderComment(c *gin.Context) {
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_ERROR_TYPE, "msg": "Sorry", "data": "", "detail": "评论者身份不明"})
 	}
+}
+
+func GetComment(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
+
+	commentType, err := strconv.Atoi(c.Query("comment_type"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_ERROR_TYPE, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	if commentType != userType {
+		// jwt查询逻辑不匹配
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_READ, "msg": "Sorry", "data": "", "detail": "jwt中的userid无法查询该评论"})
+		return
+	}
+	requirementOrderID, err := strconv.ParseUint(c.Query("pethouse_order_id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	matchOrderID, err := strconv.ParseUint(c.Query("groomer_order_id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+
+	var comment dtos.TComment
+	count := 0
+	db.DataBase.Model(&dtos.TComment{}).Where("from_user_id = ? AND pethouse_order_id = ? AND groomer_order_id = ?", accountID, requirementOrderID, matchOrderID).
+		Count(&count).First(&comment)
+	if count == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_READ, "msg": "Sorry", "data": "", "detail": "请先评论"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "Sorry", "data": comment, "detail": ""})
 }

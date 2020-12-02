@@ -35,7 +35,7 @@ func main() {
 	// pethouse
 	r.POST("/api/v1/order/pethouse/create/", handler.PetHouseCreateOrder)
 	r.DELETE("/api/v1/order/pethouse/cancel/:orderID", handler.PetHouseCancelOrder)
-	r.DELETE("/api/v1/order/pethouse/deny/:pethouseOrderID/:groomerUserID", handler.PetHouseDenyUserOrder)
+	r.DELETE("/api/v1/order/pethouse/deny/:pethouseOrderID", handler.PetHouseDenyUserOrder)
 	r.GET("/api/v1/order/pethouse/list", handler.PetHouseGetOrderList)
 	r.GET("/api/v1/order/pethouse/getorder/:orderID", handler.PetHousGetOrder)
 	r.GET("/api/v1/order/pethouse/close/:orderID", handler.PetHouseCloseOrder)
@@ -47,7 +47,10 @@ func main() {
 	r.GET("/api/v1/order/groomer/getorder/:orderID", handler.GroomerGetOrder)
 
 	// 评论
-	r.POST("/api/v1/comment/", handler.CreateOrderComment)
+	r.POST("/api/v1/comment/create", handler.CreateOrderComment)
+	r.GET("/api/v1/comment/getcomment", handler.GetComment)
+
+	// 图片接口
 
 	// 支付
 
