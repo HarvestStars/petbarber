@@ -31,7 +31,6 @@ func CreateOrderComment(c *gin.Context) {
 	}
 
 	var comment dtos.TComment
-
 	commentType := c.Query("comment_type")
 	switch commentType {
 	case "CommentToPetGroomerOrder":
@@ -50,15 +49,29 @@ func CreateOrderComment(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "目标requirement订单不存在"})
 			return
 		}
+
+		if requirementOrder.Status != dtos.FINISHED {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "订单未完成, 无法评论"})
+			return
+		}
 		var matchOrder dtos.ToMatch
-		db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).First(&matchOrder)
+		db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).First(&matchOrder)
 		var groomer dtos.TuGroomer
 		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).First(&groomer)
 		comment.ToUserID = groomer.AccountID
 		comment.CommentType = 2
 		comment.Favor = commentReq.Favor
 		comment.Content = commentReq.Content
-		db.DataBase.Create(&comment)
+		comment.PethouseOrderID = commentReq.OrderID
+		comment.GroomerOrderID = matchOrder.ID
+		db.DataBase.Model(&dtos.TComment{}).Where("pethouse_order_id = ? AND groomer_order_id = ?", commentReq.OrderID, matchOrder.ID).Count(&count)
+		if count == 0 {
+			// 未评论记录
+			db.DataBase.Create(&comment)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "不可重复评论"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": ""})
 
 	case "CommentToPetHouseOrder":
@@ -77,15 +90,29 @@ func CreateOrderComment(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "目标match订单不存在"})
 			return
 		}
+
+		if matchOrder.Status != dtos.FINISHED {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "订单未完成, 无法评论"})
+			return
+		}
 		var requirementOrder dtos.ToRequirement
 		db.DataBase.Model(&dtos.ToRequirement{}).Where("id = ?", matchOrder.PethouseOrderID).First(&requirementOrder)
 		var petHouse dtos.TuPethouse
 		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).First(&petHouse)
 		comment.ToUserID = petHouse.AccountID
-		comment.CommentType = 2
+		comment.CommentType = 1
 		comment.Favor = commentReq.Favor
 		comment.Content = commentReq.Content
-		db.DataBase.Create(&comment)
+		comment.PethouseOrderID = requirementOrder.ID
+		comment.GroomerOrderID = commentReq.OrderID
+		db.DataBase.Model(&dtos.TComment{}).Where("pethouse_order_id = ? AND groomer_order_id = ?", requirementOrder.ID, commentReq.OrderID).Count(&count)
+		if count == 0 {
+			// 未评论记录
+			db.DataBase.Create(&comment)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "不可重复评论"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": ""})
 
 	default:

@@ -62,9 +62,9 @@ func GroomerCreateOrder(c *gin.Context) {
 	tx.Model(&dtos.ToMatch{}).Create(&matchOrder)
 	updatedTime := time.Now().UTC().UnixNano() / 1e6
 	tx.Model(&dtos.ToRequirement{}).Where("id = ?", requirementOrder.ID).UpdateColumns(dtos.ToRequirement{
-		UpdatedAt:    updatedTime,
-		Status:       dtos.RUNNING,
-		MatchOrderID: matchOrder.ID,
+		UpdatedAt:      updatedTime,
+		Status:         dtos.RUNNING,
+		GroomerOrderID: matchOrder.ID,
 	}).First(&requirementOrder)
 	var petHouse dtos.TuPethouse
 	tx.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).First(&petHouse)

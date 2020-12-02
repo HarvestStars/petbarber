@@ -133,7 +133,7 @@ func PetHouseCancelOrder(c *gin.Context) {
 		// RUNNING 取消
 		// 十分钟校验
 		var matchOrder dtos.ToMatch
-		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).First(&matchOrder)
+		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).First(&matchOrder)
 		if (matchOrder.CreatedAt/1e3 + 600) < time.Now().UTC().Unix() {
 			// 超出可取消时间
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "被接单已经超过10分钟"})
@@ -142,7 +142,7 @@ func PetHouseCancelOrder(c *gin.Context) {
 		}
 
 		// match 和 requirement 双表联动取消
-		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).UpdateColumns(dtos.ToMatch{
+		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).UpdateColumns(dtos.ToMatch{
 			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
 			Status:    dtos.CANCELORDER})
 
@@ -206,7 +206,7 @@ func PetHouseDenyUserOrder(c *gin.Context) {
 	}
 
 	var matchOrder dtos.ToMatch
-	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).Count(&count).First(&matchOrder)
+	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).Count(&count).First(&matchOrder)
 	if count == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": "match中无该订单"})
 		return
@@ -217,11 +217,11 @@ func PetHouseDenyUserOrder(c *gin.Context) {
 		return
 	}
 	tx.Model(&dtos.ToRequirement{}).Where("id = ?", petHouseOrderID).UpdateColumns(map[string]interface{}{
-		"updated_at":     time.Now().UTC().UnixNano() / 1e6,
-		"status":         dtos.NEW,
-		"match_order_id": 0})
+		"updated_at":       time.Now().UTC().UnixNano() / 1e6,
+		"status":           dtos.NEW,
+		"groomer_order_id": 0})
 
-	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).UpdateColumns(dtos.ToMatch{
+	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).UpdateColumns(dtos.ToMatch{
 		UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
 		Status:    dtos.CANCELGROOMER})
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "成功拒绝该美容师"})
@@ -261,7 +261,7 @@ func PetHouseGetOrderList(c *gin.Context) {
 	var listResp []dtos.PCOrderResp
 	for _, order := range requirementOrders {
 		var matchOrder dtos.ToMatch
-		db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", order.MatchOrderID).First(&matchOrder)
+		db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", order.GroomerOrderID).First(&matchOrder)
 		var groomer dtos.TuGroomer
 		db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).First(&groomer)
 		var orderResp dtos.PCOrderResp
@@ -314,7 +314,7 @@ func PetHousGetOrder(c *gin.Context) {
 		return
 	}
 	var matchOrder dtos.ToMatch
-	db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).First(&matchOrder)
+	db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).First(&matchOrder)
 	var groomer dtos.TuGroomer
 	db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).First(&groomer)
 	var orderResp dtos.PCOrderResp
@@ -363,7 +363,7 @@ func PetHouseCloseOrder(c *gin.Context) {
 	}
 	if requirementOrder.Status != dtos.RUNNING {
 		// 未在可完成状态
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_FINISHED, "msg": "Sorry", "data": "", "detail": "订单未开始或已经结束"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_FINISHED, "msg": "Sorry", "data": "", "detail": "订单不在RUNNING状态"})
 		return
 	}
 
@@ -374,7 +374,7 @@ func PetHouseCloseOrder(c *gin.Context) {
 		TotalPayment: float32(totalPayment),
 		Status:       dtos.FINISHED,
 	})
-	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).UpdateColumns(dtos.ToMatch{
+	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).UpdateColumns(dtos.ToMatch{
 		UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
 		Status:    dtos.FINISHED,
 	})
