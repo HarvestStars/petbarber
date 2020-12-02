@@ -234,4 +234,64 @@ func GroomerGetOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderResp, "detail": ""})
 }
 
-func GroomerGetActivePethouseOrder(c *gin.Context) {}
+func GroomerGetActivePethouseOrder(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
+	if userType != 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETGROOMER_TOKEN"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.Query("page_size"))
+	pageIndex, err := strconv.Atoi(c.Query("page_index"))
+	//lastOrderID, err := strconv.ParseUint(c.Query("last_order_id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+
+	// 该groomer所有被取消的match
+	var matchOrders []dtos.ToMatch
+	db.DataBase.Model(&dtos.ToMatch{}).Where("status = ? AND user_id = ?", dtos.CANCELGROOMER, accountID).Find(&matchOrders)
+	var denyOrderList []uint
+	for _, match := range matchOrders {
+		denyOrderList = append(denyOrderList, match.PethouseOrderID)
+	}
+
+	// 平台所有等待接单的requirement, 剔除上述被取消的match部分
+	var requirementOrders []dtos.ToRequirement
+	count := 0
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ?", dtos.NEW).Not(denyOrderList).
+		Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
+
+	var listResp []dtos.PCActiveOrderResp
+	for _, order := range requirementOrders {
+		var petHouse dtos.TuPethouse
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", order.UserID).First(&petHouse)
+		var orderResp dtos.PCActiveOrderResp
+		err = orderResp.RespTransfer(order, petHouse)
+		if err == nil {
+			listResp = append(listResp, orderResp)
+		}
+	}
+
+	var orderListResp dtos.PCActiveListResp
+	orderListResp.List = listResp
+	orderListResp.PageInfo = dtos.PageInfo{
+		TotalItems: count,
+		TotalPages: count/pageSize + 1,
+		PageSize:   pageSize,
+		PageIndex:  pageIndex,
+	}
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderListResp, "detail": ""})
+}
