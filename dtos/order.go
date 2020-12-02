@@ -20,7 +20,7 @@ type ToRequirement struct {
 	OrderType    int     // 订单类型 洗剪吹, 遛狗
 	Status       int     // 订单状态
 	MatchOrderID uint    // 美容师接单号
-	UserID       uint    // 门店id
+	UserID       uint    // account id
 }
 
 // 订单类型
@@ -47,5 +47,5 @@ type ToMatch struct {
 	UpdatedAt       int64 `json:"updated_at"`
 	Status          int   `json:"status"`            // 订单状态
 	PethouseOrderID uint  `json:"pethouse_order_id"` // 门店订单号
-	UserID          uint  `json:"user_id"`           // 美容师id
+	UserID          uint  `json:"user_id"`           // account id
 }

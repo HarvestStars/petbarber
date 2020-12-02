@@ -1,5 +1,12 @@
 package dtos
 
+type PageInfo struct {
+	TotalItems int `json:"total_items"`
+	TotalPages int `json:"total_pages"`
+	PageSize   int `json:"page_size"`
+	PageIndex  int `json:"page_index"`
+}
+
 // 门店派单响应
 type PCOrderResp struct {
 	ID           uint        `json:"id"` // torequirement 订单号
@@ -28,6 +35,11 @@ type Detail struct {
 type Children struct {
 	MatchOrder ToMatch   `json:"match_order"`
 	Groomer    TuGroomer `json:"groomer"`
+}
+
+type PCOrderListResp struct {
+	List     []PCOrderResp `json:"lists"`
+	PageInfo PageInfo      `json:"pagination"`
 }
 
 func (order *PCOrderResp) RespTransfer(requirementOrder ToRequirement, matchOrder ToMatch, groomer TuGroomer) error {
@@ -61,49 +73,24 @@ type PCMatchResp struct {
 }
 
 type Parent struct {
-	ID           uint        `json:"id"`
-	StartedAt    int64       `json:"started_at"`
-	FinishedAt   int64       `json:"finished_at"`
-	OrderType    int         `json:"order_type"`
-	CreateAt     int64       `json:"created_at"`
-	UpdatedAt    int64       `json:"updated_at"`
-	ServiceItems []int       `json:"service_items"`
-	Payment      PaymentInfo `json:"payment"`
+	RequirementOrder ToRequirement `json:"requirement_order"`
+	PetHouse         TuPethouse    `json:"tu_pethouse"`
 }
 
-func (order *PCMatchResp) RespTransfer(matchOrder ToMatch, requirementOrder ToRequirement) error {
+func (order *PCMatchResp) RespTransfer(matchOrder ToMatch, requirementOrder ToRequirement, petHouse TuPethouse) {
 	order.ID = matchOrder.ID
 	order.Status = matchOrder.Status
 	order.CreateAt = matchOrder.CreatedAt
 	order.UpdatedAt = matchOrder.UpdatedAt
-	payModeInt, err := ToPayMode(requirementOrder.Basic, requirementOrder.Commission)
-	if err != nil {
-		return err
-	}
-	detail := Detail{Basic: requirementOrder.Basic, Commission: requirementOrder.Commission}
 	order.Parent = Parent{
-		ID:           requirementOrder.ID,
-		StartedAt:    requirementOrder.StartedAt,
-		FinishedAt:   requirementOrder.FinishedAt,
-		OrderType:    requirementOrder.OrderType,
-		CreateAt:     requirementOrder.CreatedAt,
-		UpdatedAt:    requirementOrder.UpdatedAt,
-		ServiceItems: ToServiceItems(requirementOrder.ServiceBits),
-		Payment:      PaymentInfo{Mode: payModeInt, Detail: detail},
+		RequirementOrder: requirementOrder,
+		PetHouse:         petHouse,
 	}
 	order.PethouseOrderID = requirementOrder.ID
 	order.UserID = matchOrder.UserID
-	return nil
 }
 
-type PageInfo struct {
-	TotalItems int `json:"total_items"`
-	TotalPages int `json:"total_pages"`
-	PageSize   int `json:"page_size"`
-	PageIndex  int `json:"page_index"`
-}
-
-type PCOrderListResp struct {
-	List     []PCOrderResp `json:"lists"`
+type PCMatchListResp struct {
+	List     []PCMatchResp `json:"lists"`
 	PageInfo PageInfo      `json:"pagination"`
 }

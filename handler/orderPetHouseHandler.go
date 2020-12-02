@@ -35,7 +35,6 @@ func PetHouseCreateOrder(c *gin.Context) {
 	orderType := c.Query("order_type")
 	switch orderType {
 	case "WCB":
-		requirementOrder.UserID = accountID
 		requirementOrder.CreatedAt = time.Now().UTC().UnixNano() / 1e6
 		requirementOrder.StartedAt = petHouseOrderReq.StartedAt
 		requirementOrder.FinishedAt = petHouseOrderReq.FinishedAt
@@ -94,6 +93,7 @@ func PetHouseCancelOrder(c *gin.Context) {
 		return
 	}
 	tokenPayload, err := ParseToken(tokenStr)
+	accountID := uint(tokenPayload["id"].(float64))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
@@ -112,7 +112,7 @@ func PetHouseCancelOrder(c *gin.Context) {
 	orderCount := 0
 	var requirementOrder dtos.ToRequirement
 	tx := db.DataBase.Begin()
-	tx.Model(&dtos.ToRequirement{}).Where("id = ?", uint(orderID)).Count(&orderCount).First(&requirementOrder)
+	tx.Model(&dtos.ToRequirement{}).Where("id = ? AND user_id = ?", uint(orderID), accountID).Count(&orderCount).First(&requirementOrder)
 	if orderCount == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "目标requirement订单不存在"})
 		return
@@ -172,6 +172,7 @@ func PetHouseDenyUserOrder(c *gin.Context) {
 		return
 	}
 	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
 	if userType != 1 {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETHOUSE_TOKEN"})
 		return
@@ -193,9 +194,9 @@ func PetHouseDenyUserOrder(c *gin.Context) {
 	defer tx.Commit()
 	count := 0
 	var requirementOrder dtos.ToRequirement
-	tx.Model(&dtos.ToRequirement{}).Where("id = ?", petHouseOrderID).Count(&count).First(&requirementOrder)
+	tx.Model(&dtos.ToRequirement{}).Where("id = ? AND user_id = ?", petHouseOrderID, accountID).Count(&count).First(&requirementOrder)
 	if count == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": "requirement中无该订单"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "requirement中无该订单"})
 		return
 	}
 	if requirementOrder.Status != dtos.RUNNING {
@@ -239,6 +240,7 @@ func PetHouseGetOrderList(c *gin.Context) {
 		return
 	}
 	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
 	if userType != 1 {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETHOUSE_TOKEN"})
 		return
@@ -254,7 +256,7 @@ func PetHouseGetOrderList(c *gin.Context) {
 	}
 	var requirementOrders []dtos.ToRequirement
 	count := 0
-	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ?", orderStatus).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ? AND user_id = ?", orderStatus, accountID).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
 
 	var listResp []dtos.PCOrderResp
 	for _, order := range requirementOrders {
@@ -280,6 +282,101 @@ func PetHouseGetOrderList(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderListResp, "detail": ""})
 }
 
-func PetHousGetOrder(c *gin.Context) {}
+func PetHousGetOrder(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
+	if userType != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETHOUSE_TOKEN"})
+		return
+	}
+	orderID, err := strconv.ParseUint(c.Param("orderID"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
 
-func PetHouseCloseOrder(c *gin.Context) {}
+	var requirementOrder dtos.ToRequirement
+	count := 0
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("id = ? AND user_id = ?", orderID, accountID).Count(&count).First(&requirementOrder)
+	if count == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "requirement中无该订单"})
+		return
+	}
+	var matchOrder dtos.ToMatch
+	db.DataBase.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).First(&matchOrder)
+	var groomer dtos.TuGroomer
+	db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).First(&groomer)
+	var orderResp dtos.PCOrderResp
+	err = orderResp.RespTransfer(requirementOrder, matchOrder, groomer)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_PAYMENT_DATA_MISSION, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderResp, "detail": ""})
+}
+
+func PetHouseCloseOrder(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
+	if userType != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETHOUSE_TOKEN"})
+		return
+	}
+	orderID, err := strconv.ParseUint(c.Param("orderID"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	totalPayment, err := strconv.ParseFloat(c.Query("total_payment"), 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_FINISHED, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	var requirementOrder dtos.ToRequirement
+	count := 0
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("id = ? AND user_id = ?", orderID, accountID).Count(&count).First(&requirementOrder)
+	if count == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "requirement中无该订单"})
+		return
+	}
+	if requirementOrder.Status != dtos.RUNNING {
+		// 未在可完成状态
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_FINISHED, "msg": "Sorry", "data": "", "detail": "订单未开始或已经结束"})
+		return
+	}
+
+	tx := db.DataBase.Begin()
+	defer tx.Commit()
+	tx.Model(&dtos.ToRequirement{}).Where("id = ?", orderID).UpdateColumns(dtos.ToRequirement{
+		UpdatedAt:    time.Now().UTC().UnixNano() / 1e6,
+		TotalPayment: float32(totalPayment),
+		Status:       dtos.FINISHED,
+	})
+	tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.MatchOrderID).UpdateColumns(dtos.ToMatch{
+		UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
+		Status:    dtos.FINISHED,
+	})
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "订单完成"})
+}

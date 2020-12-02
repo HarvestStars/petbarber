@@ -48,6 +48,9 @@ func GroomerCreateOrder(c *gin.Context) {
 		return
 	}
 
+	// 商家取消美容师订单屏蔽逻辑
+	// 目前由GroomerGetActivePethouseOrder实现
+
 	var matchOrder dtos.ToMatch
 	matchOrder.CreatedAt = time.Now().UTC().UnixNano() / 1e6
 	matchOrder.Status = dtos.RUNNING
@@ -63,13 +66,11 @@ func GroomerCreateOrder(c *gin.Context) {
 		Status:       dtos.RUNNING,
 		MatchOrderID: matchOrder.ID,
 	}).First(&requirementOrder)
+	var petHouse dtos.TuPethouse
+	tx.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).First(&petHouse)
 	tx.Commit()
 	var matchResp dtos.PCMatchResp
-	err = matchResp.RespTransfer(matchOrder, requirementOrder)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_PAYMENT_DATA_MISSION, "msg": "Sorry", "data": "", "detail": err.Error()})
-		return
-	}
+	matchResp.RespTransfer(matchOrder, requirementOrder, petHouse)
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": matchResp, "detail": ""})
 }
 
@@ -86,6 +87,7 @@ func GroomerCancelOrder(c *gin.Context) {
 		return
 	}
 	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
 	if userType != 2 {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETGROOMER_TOKEN"})
 		return
@@ -101,7 +103,7 @@ func GroomerCancelOrder(c *gin.Context) {
 	var matchOrder dtos.ToMatch
 
 	tx := db.DataBase.Begin()
-	tx.Model(&dtos.ToMatch{}).Where("id = ?", uint(orderID)).Count(&orderCount).First(&matchOrder)
+	tx.Model(&dtos.ToMatch{}).Where("id = ? AND user_id = ?", uint(orderID), accountID).Count(&orderCount).First(&matchOrder)
 	if orderCount == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "目标match订单不存在"})
 		return
@@ -135,8 +137,101 @@ func GroomerCancelOrder(c *gin.Context) {
 	}
 }
 
-func GroomerGetOrderList(c *gin.Context) {}
+func GroomerGetOrderList(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
+	if userType != 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETGROOMER_TOKEN"})
+		return
+	}
+	pageSize, err := strconv.Atoi(c.Query("page_size"))
+	pageIndex, err := strconv.Atoi(c.Query("page_index"))
+	//lastOrderID, err := strconv.ParseUint(c.Query("last_order_id"), 10, 32)
+	orderStatus, err := strconv.Atoi(c.Query("order_status"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	var matchOrders []dtos.ToMatch
+	count := 0
+	db.DataBase.Model(&dtos.ToMatch{}).Where("status = ? AND user_id = ?", orderStatus, accountID).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&matchOrders)
+
+	var listResp []dtos.PCMatchResp
+	for _, order := range matchOrders {
+		var requirementOrder dtos.ToRequirement
+		db.DataBase.Model(&dtos.ToRequirement{}).Where("id = ?", order.PethouseOrderID).First(&requirementOrder)
+		var petHouse dtos.TuPethouse
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).First(&petHouse)
+		var orderResp dtos.PCMatchResp
+		orderResp.RespTransfer(order, requirementOrder, petHouse)
+		listResp = append(listResp, orderResp)
+
+	}
+
+	var orderListResp dtos.PCMatchListResp
+	orderListResp.List = listResp
+	orderListResp.PageInfo = dtos.PageInfo{
+		TotalItems: count,
+		TotalPages: count/pageSize + 1,
+		PageSize:   pageSize,
+		PageIndex:  pageIndex,
+	}
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderListResp, "detail": ""})
+}
+
+func GroomerGetOrder(c *gin.Context) {
+	auth := c.Request.Header.Get("authorization")
+	tokenStr, err := extractTokenFromAuth(auth)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	tokenPayload, err := ParseToken(tokenStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	userType := int(tokenPayload["utype"].(float64))
+	accountID := uint(tokenPayload["id"].(float64))
+	if userType != 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "JWT_EXPECTED_PETGROOMER_TOKEN"})
+		return
+	}
+	orderID, err := strconv.ParseUint(c.Param("orderID"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_BIZ_ID_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+
+	var matchOrder dtos.ToMatch
+	count := 0
+	db.DataBase.Model(&dtos.ToMatch{}).Where("id = ? AND user_id = ?", orderID, accountID).Count(&count).First(&matchOrder)
+	if count == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_NOT_EXISTS, "msg": "Sorry", "data": "", "detail": "match中无该订单"})
+		return
+	}
+	var requirementOrder dtos.ToRequirement
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("id = ?", matchOrder.PethouseOrderID).First(&requirementOrder)
+	var petHouse dtos.TuPethouse
+	db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).First(&petHouse)
+	var orderResp dtos.PCMatchResp
+	orderResp.RespTransfer(matchOrder, requirementOrder, petHouse)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_PAYMENT_DATA_MISSION, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": orderResp, "detail": ""})
+}
 
 func GroomerGetActivePethouseOrder(c *gin.Context) {}
-
-func GroomerGetOrder(c *gin.Context) {}
