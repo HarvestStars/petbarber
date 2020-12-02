@@ -119,9 +119,11 @@ func GroomerCancelOrder(c *gin.Context) {
 			return
 		}
 		// match 和 requirement 双表联动取消
-		tx.Model(&dtos.ToRequirement{}).Where("id = ?", matchOrder.PethouseOrderID).UpdateColumns(dtos.ToRequirement{
-			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
-			Status:    dtos.CANCELPETHOUSE,
+		// requirement 回到等待接单状态
+		tx.Model(&dtos.ToRequirement{}).Where("id = ?", matchOrder.PethouseOrderID).UpdateColumns(map[string]interface{}{
+			"updated_at":       time.Now().UTC().UnixNano() / 1e6,
+			"status":           dtos.NEW,
+			"groomer_order_id": 0,
 		})
 
 		tx.Model(&dtos.ToMatch{}).Where("id = ?", matchOrder.ID).UpdateColumns(dtos.ToMatch{
