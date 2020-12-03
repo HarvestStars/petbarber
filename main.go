@@ -28,7 +28,7 @@ func main() {
 
 	// 上传资料
 	r.POST("/api/v1/account/uploadgroomer", handler.UploadGroomer) // 美容师信息页 非图片类信息上传
-	r.POST("/api/v1/account/uploadhouse", handler.UploadHouse)     // 门店信息页 非图片类信息上传
+	r.POST("/api/v1/account/uploadpethouse", handler.UploadHouse)  // 门店信息页 非图片类信息上传
 	r.POST("/api/v1/account/uploadimage", handler.UploadImage)     // 门店与美容师 图片类信息上传
 
 	// 订单业务
