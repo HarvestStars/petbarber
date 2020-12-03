@@ -126,12 +126,12 @@ func UploadImage(c *gin.Context) {
 
 	case "id_card":
 		IDCardNumber := c.Request.PostFormValue("id_card_number")
-		fileFront, headerFront, err := c.Request.FormFile("id-front")
+		fileFront, headerFront, err := c.Request.FormFile("id_front")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		fileBack, headerBack, err := c.Request.FormFile("id-back")
+		fileBack, headerBack, err := c.Request.FormFile("id_back")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
@@ -141,7 +141,7 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
 		return
 
 	case "certificate":
@@ -156,12 +156,12 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "没有找到该美容师账户"})
 			return
 		}
-		fileFront, headerFront, err := c.Request.FormFile("certifi-front")
+		fileFront, headerFront, err := c.Request.FormFile("certifi_front")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		fileBack, headerBack, err := c.Request.FormFile("certifi-back")
+		fileBack, headerBack, err := c.Request.FormFile("certifi_back")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
@@ -195,17 +195,17 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "没有找到该门店账户"})
 			return
 		}
-		fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment-front")
+		fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment_front")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment-inside")
+		fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment_inside")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		fileFront, headerFront, err := c.Request.FormFile("license-front")
+		fileFront, headerFront, err := c.Request.FormFile("license_front")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
@@ -325,8 +325,8 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 		db.DataBase.Model(&groomer).UpdateColumns(map[string]interface{}{
 			"updated_at":     time.Now().UTC().UnixNano() / 1e6,
 			"id_card_number": IDCardNumber,
-			"id_card_front":  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
-			"id_card_back":   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
+			"id_card_front":  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
+			"id_card_back":   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
 		return nil
 	default:
 		return errors.New("身份证类型错误")
