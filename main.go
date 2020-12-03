@@ -51,6 +51,11 @@ func main() {
 	r.GET("/api/v1/comment/getcomment", handler.GetComment)
 
 	// 图片接口
+	r.GET("/api/v1/images/avatar/:name", handler.GetAvatarImage)
+	r.GET("/api/v1/images/idcard/:name", handler.GetIDCardImage)
+	r.GET("/api/v1/images/envir/:name", handler.GetEnvironmentImage)
+	r.GET("/api/v1/images/license/:name", handler.GetLicenseImage)
+	r.GET("/api/v1/images/certifi/:name", handler.GetCertificateImage)
 
 	// 支付
 

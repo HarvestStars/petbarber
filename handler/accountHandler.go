@@ -123,6 +123,14 @@ func GetUserProfile(c *gin.Context) {
 			house.AccountID = accountID
 			house.CreatedAt = time.Now().UTC().UnixNano() / 1e6
 			db.DataBase.Create(&house)
+		} else {
+			// 转换图片URL
+			house.Avatar = GenImageURL("/api/v1/images/avatar/", house.Avatar)
+			house.IDCardFront = GenImageURL("/api/v1/images/idcard/", house.IDCardFront)
+			house.IDCardBack = GenImageURL("/api/v1/images/idcard/", house.IDCardBack)
+			house.EnvironmentFront = GenImageURL("/api/v1/images/envir/", house.EnvironmentFront)
+			house.EnvironmentInside = GenImageURL("/api/v1/images/envir/", house.EnvironmentInside)
+			house.License = GenImageURL("/api/v1/images/license/", house.License)
 		}
 		if jwtUserType != 1 {
 			// 该身份的第一次登陆, 同时更新account表
@@ -144,6 +152,13 @@ func GetUserProfile(c *gin.Context) {
 			groomer.AccountID = accountID
 			groomer.CreatedAt = time.Now().UTC().UnixNano() / 1e6
 			db.DataBase.Create(&groomer)
+		} else {
+			// 转换图片URL
+			groomer.Avatar = GenImageURL("/api/v1/images/avatar/", groomer.Avatar)
+			groomer.IDCardFront = GenImageURL("/api/v1/images/idcard/", groomer.IDCardFront)
+			groomer.IDCardBack = GenImageURL("/api/v1/images/idcard/", groomer.IDCardBack)
+			groomer.CertificateFront = GenImageURL("/api/v1/images/certifi/", groomer.CertificateFront)
+			groomer.CertificateBack = GenImageURL("/api/v1/images/certifi/", groomer.CertificateBack)
 		}
 		if jwtUserType != 2 {
 			// 该身份的第一次登陆, 同时更新account表

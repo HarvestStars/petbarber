@@ -65,6 +65,22 @@ func transferImage(file multipart.File, header *multipart.FileHeader, rootPath s
 	return fileName, nil
 }
 
+// GenImageURL 生成图片访问url
+func GenImageURL(baseURL string, imagePath string) string {
+	fileName := getFileNameWithSuffix(imagePath)
+	URL := baseURL + fileName
+	return URL
+}
+
+func getFileNameWithSuffix(path string) string {
+	for i := len(path) - 1; i >= 0 && path[i] != '/'; i-- {
+		if path[i] == '/' {
+			return path[i:]
+		}
+	}
+	return ""
+}
+
 // -----------------------------------------------------------------------------jwt-----------------------------------------------------------------------------
 // 生成Jwt
 func CreateJwtToken(user dtos.User) (dtos.Token, error) {
