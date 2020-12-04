@@ -42,6 +42,37 @@ type PCOrderListResp struct {
 	PageInfo PageInfo      `json:"pagination"`
 }
 
+// 门店产生派单的响应
+type PCOrderRespOnlyCreate struct {
+	ID           uint        `json:"id"` // torequirement 订单号
+	StartedAt    int64       `json:"started_at"`
+	FinishedAt   int64       `json:"finished_at"`
+	CreateAt     int64       `json:"created_at"`
+	OrderType    int         `json:"order_type"`
+	Status       int         `json:"status"`
+	ServiceItems []int       `json:"service_items"`
+	Payment      PaymentInfo `json:"payment"`
+	UserID       uint        `json:"user_id"`
+}
+
+func (order *PCOrderRespOnlyCreate) RespCreateOrder(requirementOrder ToRequirement) error {
+	order.ID = requirementOrder.ID
+	order.StartedAt = requirementOrder.StartedAt
+	order.FinishedAt = requirementOrder.FinishedAt
+	order.CreateAt = requirementOrder.CreatedAt
+	order.OrderType = requirementOrder.OrderType
+	order.Status = requirementOrder.Status
+	order.ServiceItems = ToServiceItems(requirementOrder.ServiceBits)
+	payModeInt, err := ToPayMode(requirementOrder.Basic, requirementOrder.Commission)
+	if err != nil {
+		return err
+	}
+	detail := Detail{Basic: requirementOrder.Basic, Commission: requirementOrder.Commission, TotalPayment: requirementOrder.TotalPayment}
+	order.Payment = PaymentInfo{Mode: payModeInt, Detail: detail}
+	order.UserID = requirementOrder.UserID
+	return nil
+}
+
 func (order *PCOrderResp) RespTransfer(requirementOrder ToRequirement, matchOrder ToMatch, groomer TuGroomer) error {
 	order.ID = requirementOrder.ID
 	order.StartedAt = requirementOrder.StartedAt
@@ -73,8 +104,8 @@ type PCMatchResp struct {
 }
 
 type Parent struct {
-	RequirementOrder ToRequirement `json:"requirement_order"`
-	PetHouse         TuPethouse    `json:"tu_pethouse"`
+	RequirementOrder PCOrderRespOnlyCreate `json:"requirement_order"`
+	PetHouse         TuPethouse            `json:"tu_pethouse"`
 }
 
 func (order *PCMatchResp) RespTransfer(matchOrder ToMatch, requirementOrder ToRequirement, petHouse TuPethouse) {
@@ -82,8 +113,10 @@ func (order *PCMatchResp) RespTransfer(matchOrder ToMatch, requirementOrder ToRe
 	order.Status = matchOrder.Status
 	order.CreateAt = matchOrder.CreatedAt
 	order.UpdatedAt = matchOrder.UpdatedAt
+	var requirementResp PCOrderRespOnlyCreate
+	requirementResp.RespCreateOrder(requirementOrder)
 	order.Parent = Parent{
-		RequirementOrder: requirementOrder,
+		RequirementOrder: requirementResp,
 		PetHouse:         petHouse,
 	}
 	order.PethouseOrderID = requirementOrder.ID

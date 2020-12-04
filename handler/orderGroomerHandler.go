@@ -69,9 +69,9 @@ func GroomerCreateOrder(c *gin.Context) {
 	var petHouse dtos.TuPethouse
 	tx.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).First(&petHouse)
 	tx.Commit()
-	var matchResp dtos.PCMatchResp
-	matchResp.RespTransfer(matchOrder, requirementOrder, petHouse)
-	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": matchResp, "detail": ""})
+	///var matchResp dtos.PCMatchResp
+	//matchResp.RespTransfer(matchOrder, requirementOrder, petHouse)
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": matchOrder, "detail": ""})
 }
 
 func GroomerCancelOrder(c *gin.Context) {
@@ -256,7 +256,6 @@ func GroomerGetActivePethouseOrder(c *gin.Context) {
 	}
 	pageSize, err := strconv.Atoi(c.Query("page_size"))
 	pageIndex, err := strconv.Atoi(c.Query("page_index"))
-	//lastOrderID, err := strconv.ParseUint(c.Query("last_order_id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return

@@ -34,7 +34,7 @@ func CreateOrderComment(c *gin.Context) {
 	var comment dtos.TComment
 	commentType := c.Query("comment_type")
 	switch commentType {
-	case "CommentToPetGroomerOrder":
+	case "ToGroomerOrder":
 		// 对groomer评论
 		if userType != 1 {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "jwt不是门店用户, 无权评论美容师"})
@@ -75,7 +75,7 @@ func CreateOrderComment(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": ""})
 
-	case "CommentToPetHouseOrder":
+	case "ToPetHouseOrder":
 		// 对pethouse评论
 		if userType != 2 {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "jwt不是美容师用户, 无权评论门店"})
@@ -165,5 +165,5 @@ func GetComment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_READ, "msg": "Sorry", "data": "", "detail": "请先评论"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "Sorry", "data": comment, "detail": ""})
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": comment, "detail": ""})
 }

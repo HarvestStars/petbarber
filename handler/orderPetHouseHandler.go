@@ -69,15 +69,11 @@ func PetHouseCreateOrder(c *gin.Context) {
 		return
 	}
 	// 转换请求数据，然后记录DB, 事务
-	var matchOrder dtos.ToMatch
-	var groomer dtos.TuGroomer
 	tx := db.DataBase.Begin()
 	tx.Model(&dtos.ToRequirement{}).Create(&requirementOrder)
-	//tx.Model(&dtos.ToMatch{}).Where("pethouse_order_id = ?", requirementOrder.ID).First(&matchOrder)
-	//tx.Model(&dtos.TuGroomer{}).Where("pethouse_order_id = ?", requirementOrder.ID).First(&matchOrder)
 	tx.Commit()
-	var orderResp dtos.PCOrderResp
-	err = orderResp.RespTransfer(requirementOrder, matchOrder, groomer)
+	var orderResp dtos.PCOrderRespOnlyCreate
+	err = orderResp.RespCreateOrder(requirementOrder)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_PAYMENT_DATA_MISSION, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
