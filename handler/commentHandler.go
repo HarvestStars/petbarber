@@ -121,29 +121,12 @@ func CreateOrderComment(c *gin.Context) {
 	}
 }
 
+// GetComment 根据目标对象id和两份订单的订单号,返回对应的评论
 func GetComment(c *gin.Context) {
-	auth := c.Request.Header.Get("authorization")
-	tokenStr, err := extractTokenFromAuth(auth)
+	// 获取其他人对to_user_id用户的评论信息
+	accountID, err := strconv.ParseUint(c.Query("to_user_id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_TYPE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
-		return
-	}
-	tokenPayload, err := ParseToken(tokenStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_VERIFY_RESULT_BAD_TOKEN, "msg": "Sorry", "data": "", "detail": err.Error()})
-		return
-	}
-	userType := int(tokenPayload["utype"].(float64))
-	accountID := uint(tokenPayload["id"].(float64))
-
-	commentType, err := strconv.Atoi(c.Query("comment_type"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_ERROR_TYPE, "msg": "Sorry", "data": "", "detail": err.Error()})
-		return
-	}
-	if commentType != userType {
-		// jwt查询逻辑不匹配
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_READ, "msg": "Sorry", "data": "", "detail": "jwt中的userid无法查询该评论"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	requirementOrderID, err := strconv.ParseUint(c.Query("pethouse_order_id"), 10, 32)
@@ -159,11 +142,42 @@ func GetComment(c *gin.Context) {
 
 	var comment dtos.TComment
 	count := 0
-	db.DataBase.Model(&dtos.TComment{}).Where("from_user_id = ? AND pethouse_order_id = ? AND groomer_order_id = ?", accountID, requirementOrderID, matchOrderID).
+	db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ? AND pethouse_order_id = ? AND groomer_order_id = ?", accountID, requirementOrderID, matchOrderID).
 		Count(&count).First(&comment)
 	if count == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_READ, "msg": "Sorry", "data": "", "detail": "请先评论"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_READ, "msg": "Sorry", "data": "", "detail": "没有这条评论"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": comment, "detail": ""})
+}
+
+// GetCommentList 目标对象id所有的被评论信息
+func GetCommentList(c *gin.Context) {
+	// 其他人对to_user_id用户的所有评论信息
+	accountID, err := strconv.ParseUint(c.Query("to_user_id"), 10, 32)
+	pageSize, err := strconv.Atoi(c.Query("page_size"))
+	pageIndex, err := strconv.Atoi(c.Query("page_index"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
+
+	var comments []dtos.TComment
+	count := 0
+	db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ?", accountID).
+		Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&comments)
+	if count == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_READ, "msg": "Sorry", "data": "", "detail": "该用户没有评论"})
+		return
+	}
+
+	var commentList dtos.CommentResp
+	commentList.List = comments
+	commentList.PageInfo = dtos.PageInfo{
+		TotalItems: count,
+		TotalPages: count/pageSize + 1,
+		PageSize:   pageSize,
+		PageIndex:  pageIndex,
+	}
+	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": commentList, "detail": ""})
 }

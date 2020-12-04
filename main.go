@@ -49,6 +49,7 @@ func main() {
 	// 评论
 	r.POST("/api/v1/comment/create", handler.CreateOrderComment)
 	r.GET("/api/v1/comment/getcomment", handler.GetComment)
+	r.GET("/api/v1/comment/commentlist", handler.GetCommentList)
 
 	// 图片接口
 	r.GET("/api/v1/images/avatar/:name", handler.GetAvatarImage)
