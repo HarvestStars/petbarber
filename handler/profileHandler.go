@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"time"
@@ -34,7 +33,7 @@ func UploadGroomer(c *gin.Context) {
 	var groomer dtos.TuGroomer
 	err = c.Bind(&groomer)
 	if err != nil {
-		log.Print(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.PROFILE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	count := 0
@@ -72,7 +71,7 @@ func UploadHouse(c *gin.Context) {
 	var house dtos.TuPethouse
 	err = c.Bind(&house)
 	if err != nil {
-		log.Print(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.PROFILE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	count := 0

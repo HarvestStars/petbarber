@@ -30,6 +30,10 @@ func PetHouseCreateOrder(c *gin.Context) {
 	}
 	var petHouseOrderReq dtos.CreatePetHousePCOrderReq
 	err = c.Bind(&petHouseOrderReq)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_INTERNAL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
 	var requirementOrder dtos.ToRequirement
 
 	orderType := c.Query("order_type")

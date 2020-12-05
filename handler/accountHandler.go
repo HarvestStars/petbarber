@@ -40,7 +40,11 @@ func createSmsCode(phone string) (string, int64) {
 
 func SigninOrSignup(c *gin.Context) {
 	var signInReq dtos.UserSigninReq
-	c.Bind(&signInReq)
+	err := c.Bind(&signInReq)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.LOGIN_REQ_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		return
+	}
 	if len(signInReq.Smsid) != 58 {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.LOGIN_SMS_CODE_INVALID, "msg": "Sorry", "data": "", "detail": "smsid length wrong"})
 		return
