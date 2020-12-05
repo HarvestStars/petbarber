@@ -243,15 +243,15 @@ func PetHouseGetOrderList(c *gin.Context) {
 
 	pageSize, err := strconv.Atoi(c.Query("page_size"))
 	pageIndex, err := strconv.Atoi(c.Query("page_index"))
-	//lastOrderID, err := strconv.ParseUint(c.Query("last_order_id"), 10, 32)
-	orderStatus, err := strconv.Atoi(c.Query("order_status"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
+	orderStatusList := c.QueryArray("order_status")
+
 	var requirementOrders []dtos.ToRequirement
 	count := 0
-	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ? AND user_id = ?", orderStatus, accountID).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("status in (?) AND user_id = ?", orderStatusList, accountID).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
 
 	var listResp []dtos.PCOrderResp
 	for _, order := range requirementOrders {

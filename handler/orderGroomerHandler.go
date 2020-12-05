@@ -159,15 +159,15 @@ func GroomerGetOrderList(c *gin.Context) {
 	}
 	pageSize, err := strconv.Atoi(c.Query("page_size"))
 	pageIndex, err := strconv.Atoi(c.Query("page_index"))
-	//lastOrderID, err := strconv.ParseUint(c.Query("last_order_id"), 10, 32)
-	orderStatus, err := strconv.Atoi(c.Query("order_status"))
+	orderStatusList := c.QueryArray("order_status")
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
 	}
 	var matchOrders []dtos.ToMatch
 	count := 0
-	db.DataBase.Model(&dtos.ToMatch{}).Where("status = ? AND user_id = ?", orderStatus, accountID).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&matchOrders)
+	db.DataBase.Model(&dtos.ToMatch{}).Where("status in (?) AND user_id = ?", orderStatusList, accountID).Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&matchOrders)
 
 	var listResp []dtos.PCMatchResp
 	for _, order := range matchOrders {
