@@ -24,9 +24,9 @@ func ToServiceBits(serviceItems []int) int64 {
 
 func ToServiceItems(serviceBits int64) []int {
 	var serviceItems []int
-	for i := 0; i < 6; i++ {
-		serviceBits &= int64(math.Pow(2, float64(i)))
-		if serviceBits != int64(0) {
+	for i := 0; i <= 6; i++ {
+		v := serviceBits & int64(math.Pow(2, float64(i)))
+		if v != int64(0) {
 			serviceItems = append(serviceItems, i)
 		}
 	}
