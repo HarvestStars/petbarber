@@ -12,17 +12,29 @@ type UserSigninReq struct {
 	Smsid string `json:"smsid"`
 }
 
-type UserSigninRep struct {
+type UserSignupRep struct {
 	User  User  `json:"user"`
 	Token Token `json:"token"`
 }
 
+type PetHouseSigninRep struct {
+	User     User       `json:"user"`
+	PetHouse TuPethouse `json:"user_info"`
+	Token    Token      `json:"token"`
+}
+
+type GroomerSigninRep struct {
+	User    User      `json:"user"`
+	Groomer TuGroomer `json:"user_info"`
+	Token   Token     `json:"token"`
+}
+
 type UserPetHouseProfileRep struct {
-	User  TuPethouse `json:"user"`
+	User  TuPethouse `json:"user_info"`
 	Token Token      `json:"token"`
 }
 
 type UserGroomerProfileRep struct {
-	User  TuGroomer `json:"user"`
+	User  TuGroomer `json:"user_info"`
 	Token Token     `json:"token"`
 }

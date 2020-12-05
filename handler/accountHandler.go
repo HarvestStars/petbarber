@@ -90,14 +90,56 @@ func SigninOrSignup(c *gin.Context) {
 	}
 
 	// create jwt token
-	var signinRes dtos.UserSigninRep
-	signinRes.User = dtos.User{UserID: account.ID, Phone: account.Account, UserType: account.UserType}
-	JwtToken, err := CreateJwtToken(signinRes.User)
-	if err != nil {
+	switch account.UserType {
+	case 0:
+		// 刚注册
+		var signupRes dtos.UserSignupRep
+		signupRes.User = dtos.User{UserID: account.ID, Phone: account.Account, UserType: account.UserType}
+		JwtToken, err := CreateJwtToken(signupRes.User)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_CREATE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+			return
+		}
+		signupRes.Token = JwtToken
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": signupRes, "detail": ""})
+		return
 
+	case 1:
+		// 门店登录
+		var signinRes dtos.PetHouseSigninRep
+		signinRes.User = dtos.User{UserID: account.ID, Phone: account.Account, UserType: account.UserType}
+		JwtToken, err := CreateJwtToken(signinRes.User)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_CREATE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+			return
+		}
+		signinRes.Token = JwtToken
+		var pethouse dtos.TuPethouse
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", account.ID).First(&pethouse)
+		signinRes.PetHouse = pethouse
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": signinRes, "detail": ""})
+		return
+
+	case 2:
+		// 美容师登录
+		var signinRes dtos.GroomerSigninRep
+		signinRes.User = dtos.User{UserID: account.ID, Phone: account.Account, UserType: account.UserType}
+		JwtToken, err := CreateJwtToken(signinRes.User)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_CREATE_WRONG, "msg": "Sorry", "data": "", "detail": err.Error()})
+			return
+		}
+		signinRes.Token = JwtToken
+		var groomer dtos.TuGroomer
+		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", account.ID).First(&groomer)
+		signinRes.Groomer = groomer
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": signinRes, "detail": ""})
+		return
+
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.LOGIN_USER_TYPE_UNKNOW, "msg": "Sorry", "data": "", "detail": "数据库账户角色未知"})
+		return
 	}
-	signinRes.Token = JwtToken
-	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": signinRes, "detail": ""})
 }
 
 func GetUserProfile(c *gin.Context) {
