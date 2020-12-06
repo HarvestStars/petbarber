@@ -116,6 +116,13 @@ func SigninOrSignup(c *gin.Context) {
 		signinRes.Token = JwtToken
 		var pethouse dtos.TuPethouse
 		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", account.ID).First(&pethouse)
+		// 转换图片URL
+		pethouse.Avatar = GenImageURL("/api/v1/images/avatar/", pethouse.Avatar)
+		pethouse.IDCardFront = GenImageURL("/api/v1/images/idcard/", pethouse.IDCardFront)
+		pethouse.IDCardBack = GenImageURL("/api/v1/images/idcard/", pethouse.IDCardBack)
+		pethouse.EnvironmentFront = GenImageURL("/api/v1/images/envir/", pethouse.EnvironmentFront)
+		pethouse.EnvironmentInside = GenImageURL("/api/v1/images/envir/", pethouse.EnvironmentInside)
+		pethouse.License = GenImageURL("/api/v1/images/license/", pethouse.License)
 		signinRes.PetHouse = pethouse
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": signinRes, "detail": ""})
 		return
@@ -132,6 +139,12 @@ func SigninOrSignup(c *gin.Context) {
 		signinRes.Token = JwtToken
 		var groomer dtos.TuGroomer
 		db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", account.ID).First(&groomer)
+		// 转换图片URL
+		groomer.Avatar = GenImageURL("/api/v1/images/avatar/", groomer.Avatar)
+		groomer.IDCardFront = GenImageURL("/api/v1/images/idcard/", groomer.IDCardFront)
+		groomer.IDCardBack = GenImageURL("/api/v1/images/idcard/", groomer.IDCardBack)
+		groomer.CertificateFront = GenImageURL("/api/v1/images/certifi/", groomer.CertificateFront)
+		groomer.CertificateBack = GenImageURL("/api/v1/images/certifi/", groomer.CertificateBack)
 		signinRes.Groomer = groomer
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": signinRes, "detail": ""})
 		return
