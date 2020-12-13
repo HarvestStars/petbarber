@@ -41,6 +41,15 @@ type JwtConf struct {
 
 var JwtSetting = &JwtConf{}
 
+type AliSmsConf struct {
+	AccessID     string
+	AccessSecret string
+	SignName     string
+	TemplateCode string
+}
+
+var AliSmsSetting = &AliSmsConf{}
+
 // Setup 启动配置
 func Setup() {
 	cfg, err := ini.Load("./conf/my.ini")
@@ -52,6 +61,7 @@ func Setup() {
 	mapTo(cfg, "server", ServerSetting)
 	mapTo(cfg, "image", ImagePathSetting)
 	mapTo(cfg, "keys", JwtSetting)
+	mapTo(cfg, "alisms", AliSmsSetting)
 }
 
 func mapTo(cfg *ini.File, section string, v interface{}) {

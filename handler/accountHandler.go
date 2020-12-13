@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,19 +14,33 @@ import (
 	"github.com/HarvestStars/petbarber/db"
 	"github.com/HarvestStars/petbarber/dtos"
 	"github.com/HarvestStars/petbarber/setting"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
 	"github.com/gin-gonic/gin"
 )
 
 func SendSmsCode(c *gin.Context) {
 	phone := c.Param("phone")
-	smid, expireAt := createSmsCode(phone)
+	client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", setting.AliSmsSetting.AccessID, setting.AliSmsSetting.AccessSecret)
+	request := dysmsapi.CreateSendSmsRequest()
+	request.Scheme = "https"
+	request.PhoneNumbers = phone
+	request.SignName = setting.AliSmsSetting.SignName
+	request.TemplateCode = setting.AliSmsSetting.TemplateCode
+	codeStr := strconv.Itoa(rand.Intn(9000) + 1000)
+	templateRaw := fmt.Sprintf("{\"code\":\"%s\"}", codeStr)
+	request.TemplateParam = templateRaw
+	_, err = client.SendSms(request)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "OK", "data": "", "detail": err})
+	}
+	smid, expireAt := createSmsCode(phone, codeStr)
 	res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
 }
 
-func createSmsCode(phone string) (string, int64) {
-	code := 1234 // random.randrange(1000,9999)
-	codeStr := strconv.Itoa(code)
+func createSmsCode(phone string, codeStr string) (string, int64) {
+	//code := 1234 // random.randrange(1000,9999)
+	//codeStr := strconv.Itoa(code)
 	expireAt := time.Now().Add(time.Duration(setting.JwtSetting.SmsExpireTimeSec) * time.Second).UTC().Unix()
 	expireAtStr := strconv.FormatInt(expireAt, 10)
 	expireAtHexStr := strconv.FormatInt(expireAt, 16)
