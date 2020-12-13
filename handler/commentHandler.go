@@ -69,6 +69,14 @@ func CreateOrderComment(c *gin.Context) {
 		if count == 0 {
 			// 未评论记录
 			db.DataBase.Create(&comment)
+			// 积分刷新
+			// TComment中找到所有to_user_id(美容师)订单，做累加
+			finishedCount := 0
+			db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ?", groomer.AccountID).Count(&finishedCount)
+			newFavor := (float32(finishedCount)*groomer.Favor + commentReq.Favor) / (float32(finishedCount) + 1)
+			db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).UpdateColumns(dtos.TuGroomer{
+				Favor: newFavor,
+			})
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "不可重复评论"})
 			return
@@ -110,6 +118,14 @@ func CreateOrderComment(c *gin.Context) {
 		if count == 0 {
 			// 未评论记录
 			db.DataBase.Create(&comment)
+			// 积分刷新
+			// TComment中找到所有to_user_id(门店)订单，做累加
+			finishedCount := 0
+			db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ?", petHouse.AccountID).Count(&finishedCount)
+			newFavor := (float32(finishedCount)*petHouse.Favor + commentReq.Favor) / (float32(finishedCount) + 1)
+			db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).UpdateColumns(dtos.TuPethouse{
+				Favor: newFavor,
+			})
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "不可重复评论"})
 			return
