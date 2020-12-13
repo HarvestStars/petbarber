@@ -24,7 +24,9 @@ type TuPethouse struct {
 	EnvironmentFront  string `gorm:"type:text" json:"environment_front"`  // 门店门面照片路径
 	EnvironmentInside string `gorm:"type:text" json:"environment_inside"` // 门店内部环境照片路径
 	License           string `gorm:"type:text" json:"license"`            // 营业执照照片路径
-	Location          string `gorm:"type:text" json:"location"`           // 门店地址
+	City              string `json:"city"`                                // 门店所属城市
+	Region            string `json:"region"`                              // 门店所属区域
+	Location          string `gorm:"type:text" json:"location"`           // 门店详细地址
 
 	WorkScope string `gorm:"type:text" json:"work_scope"`       // 业务范围: 猫咪洗护，猫狗寄养等
 	AccountID uint   `gorm:"not null;unique" json:"account_id"` // account_user表主键

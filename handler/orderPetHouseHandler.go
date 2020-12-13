@@ -72,6 +72,12 @@ func PetHouseCreateOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_UNKNOWN_ORDER_TYPE, "msg": "Sorry", "data": "", "detail": "无业务计划"})
 		return
 	}
+	// 获取门店城市与区域信息
+	var owner dtos.TuPethouse
+	db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).First(&owner)
+	requirementOrder.City = owner.City
+	requirementOrder.Region = owner.Region
+
 	// 转换请求数据，然后记录DB, 事务
 	tx := db.DataBase.Begin()
 	tx.Model(&dtos.ToRequirement{}).Create(&requirementOrder)

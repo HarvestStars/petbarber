@@ -17,8 +17,10 @@ type ToRequirement struct {
 	PayModeDesc    string  `gorm:"type:varchar(512)" json:"pay_mode_desc"`
 	TotalPayment   float32 `json:"total_payment"` // 总费用
 	Desc           string  `gorm:"type:varchar(512)" json:"desc"`
-	OrderType      int     `json:"order_type"`       // 订单类型 洗剪吹, 遛狗
-	Status         int     `json:"status"`           // 订单状态
+	OrderType      int     `json:"order_type"` // 订单类型 洗剪吹, 遛狗
+	Status         int     `json:"status"`     // 订单状态
+	City           string  `json:"city"`
+	Region         string  `json:"region"`
 	GroomerOrderID uint    `json:"groomer_order_id"` // 美容师接单号
 	UserID         uint    `json:"user_id"`          // account id
 }
@@ -42,10 +44,12 @@ const (
 
 // ToMatch 美容师接单
 type ToMatch struct {
-	ID              uint  `gorm:"primary_key" json:"id"`
-	CreatedAt       int64 `json:"created_at"` // utc时间戳 精确到毫秒
-	UpdatedAt       int64 `json:"updated_at"`
-	Status          int   `json:"status"`            // 订单状态
-	PethouseOrderID uint  `json:"pethouse_order_id"` // 门店订单号
-	UserID          uint  `json:"user_id"`           // account id
+	ID              uint   `gorm:"primary_key" json:"id"`
+	CreatedAt       int64  `json:"created_at"` // utc时间戳 精确到毫秒
+	UpdatedAt       int64  `json:"updated_at"`
+	Status          int    `json:"status"`            // 订单状态
+	PethouseOrderID uint   `json:"pethouse_order_id"` // 门店订单号
+	UserID          uint   `json:"user_id"`           // account id
+	City            string `json:"city"`
+	Region          string `json:"region"`
 }

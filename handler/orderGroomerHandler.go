@@ -56,6 +56,8 @@ func GroomerCreateOrder(c *gin.Context) {
 	matchOrder.Status = dtos.RUNNING
 	matchOrder.PethouseOrderID = requirementOrder.ID
 	matchOrder.UserID = accountID
+	matchOrder.City = requirementOrder.City
+	matchOrder.Region = requirementOrder.Region
 
 	// 双表事务
 	tx := db.DataBase.Begin()
@@ -256,6 +258,7 @@ func GroomerGetActivePethouseOrder(c *gin.Context) {
 	}
 	pageSize, err := strconv.Atoi(c.Query("page_size"))
 	pageIndex, err := strconv.Atoi(c.Query("page_index"))
+	region := c.Query("region")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 		return
@@ -272,7 +275,7 @@ func GroomerGetActivePethouseOrder(c *gin.Context) {
 	// 平台所有等待接单的requirement, 剔除上述被取消的match部分
 	var requirementOrders []dtos.ToRequirement
 	count := 0
-	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ?", dtos.NEW).Not(denyOrderList).
+	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ? AND region = ?", dtos.NEW, region).Not(denyOrderList).
 		Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
 
 	var listResp []dtos.PCActiveOrderResp

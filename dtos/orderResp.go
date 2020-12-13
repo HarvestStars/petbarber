@@ -53,6 +53,8 @@ type PCOrderRespOnlyCreate struct {
 	ServiceItems []int       `json:"service_items"`
 	Payment      PaymentInfo `json:"payment"`
 	UserID       uint        `json:"user_id"`
+	City         string      `json:"city"`
+	Region       string      `json:"region"`
 }
 
 func (order *PCOrderRespOnlyCreate) RespCreateOrder(requirementOrder ToRequirement) error {
@@ -70,6 +72,8 @@ func (order *PCOrderRespOnlyCreate) RespCreateOrder(requirementOrder ToRequireme
 	detail := Detail{Basic: requirementOrder.Basic, Commission: requirementOrder.Commission, TotalPayment: requirementOrder.TotalPayment}
 	order.Payment = PaymentInfo{Mode: payModeInt, Detail: detail}
 	order.UserID = requirementOrder.UserID
+	order.City = requirementOrder.City
+	order.Region = requirementOrder.Region
 	return nil
 }
 
