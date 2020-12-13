@@ -58,6 +58,9 @@ func main() {
 	r.GET("/api/v1/images/license/:name", handler.GetLicenseImage)
 	r.GET("/api/v1/images/certifi/:name", handler.GetCertificateImage)
 
+	// 法务部分
+	r.GET("/api/v1/law/agreement", handler.GetAgreement)
+
 	// 支付
 
 	r.Run(setting.ServerSetting.Host)

@@ -22,5 +22,5 @@ func Setup(user string, pwd string, host string, db string) {
 	}
 	DataBase.DB().SetConnMaxLifetime(2 * 3600 * time.Second) // 2小时空闲链接超时
 	DataBase.SingularTable(true)                             // 可以取消表名的复数形式，使得表名和结构体名称一致
-	DataBase.AutoMigrate(&dtos.TComment{}, &dtos.ToMatch{}, &dtos.ToRequirement{}, &dtos.TuAccount{}, &dtos.TuGroomer{}, &dtos.TuPethouse{})
+	DataBase.AutoMigrate(&dtos.TComment{}, &dtos.ToMatch{}, &dtos.ToRequirement{}, &dtos.TuAccount{}, &dtos.TuGroomer{}, &dtos.TuPethouse{}, &dtos.CLaw{})
 }
