@@ -19,6 +19,7 @@ type PCOrderResp struct {
 	Payment      PaymentInfo `json:"payment"`
 	Children     Children    `json:"children"`
 	UserID       uint        `json:"user_id"`
+	IsCommentTo  bool        `json:"is_comment_to"`
 }
 
 type PaymentInfo struct {
@@ -93,6 +94,7 @@ func (order *PCOrderResp) RespTransfer(requirementOrder ToRequirement, matchOrde
 	order.Payment = PaymentInfo{Mode: payModeInt, Detail: detail}
 	order.Children = Children{MatchOrder: matchOrder, Groomer: groomer}
 	order.UserID = requirementOrder.UserID
+	order.IsCommentTo = requirementOrder.IsCommentTo
 	return nil
 }
 
@@ -105,6 +107,7 @@ type PCMatchResp struct {
 	Parent          Parent `json:"parent"`
 	PethouseOrderID uint   `json:"pethouse_order_id"`
 	UserID          uint   `json:"user_id"`
+	IsCommentTo     bool   `json:"is_comment_to"`
 }
 
 type Parent struct {
@@ -125,6 +128,7 @@ func (order *PCMatchResp) RespTransfer(matchOrder ToMatch, requirementOrder ToRe
 	}
 	order.PethouseOrderID = requirementOrder.ID
 	order.UserID = matchOrder.UserID
+	order.IsCommentTo = matchOrder.IsCommentTo
 }
 
 type PCMatchListResp struct {

@@ -74,9 +74,16 @@ func CreateOrderComment(c *gin.Context) {
 			finishedCount := 0
 			db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ?", groomer.AccountID).Count(&finishedCount)
 			newFavor := (float32(finishedCount)*groomer.Favor + commentReq.Favor) / (float32(finishedCount) + 1)
-			db.DataBase.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).UpdateColumns(dtos.TuGroomer{
+			// 事务
+			tx := db.DataBase.Begin()
+			tx.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).UpdateColumns(dtos.TuGroomer{
 				Favor: newFavor,
 			})
+			// 标记该订单门店为：已主动评论美容师
+			tx.Model(&dtos.ToRequirement{}).Where("id = ? AND user_id = ?", commentReq.OrderID, accountID).UpdateColumns(dtos.ToRequirement{
+				IsCommentTo: true,
+			})
+			tx.Commit()
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "不可重复评论"})
 			return
@@ -123,9 +130,16 @@ func CreateOrderComment(c *gin.Context) {
 			finishedCount := 0
 			db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ?", petHouse.AccountID).Count(&finishedCount)
 			newFavor := (float32(finishedCount)*petHouse.Favor + commentReq.Favor) / (float32(finishedCount) + 1)
-			db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).UpdateColumns(dtos.TuPethouse{
+			// 事务
+			tx := db.DataBase.Begin()
+			tx.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).UpdateColumns(dtos.TuPethouse{
 				Favor: newFavor,
 			})
+			// 标记该订单美容师为：已主动评论门店
+			db.DataBase.Model(&dtos.ToMatch{}).Where("id = ? AND user_id = ?", commentReq.OrderID, accountID).UpdateColumns(dtos.ToMatch{
+				IsCommentTo: true,
+			})
+			tx.Commit()
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.COMMENT_CANT_CREATE_COMMENT, "msg": "Sorry", "data": "", "detail": "不可重复评论"})
 			return

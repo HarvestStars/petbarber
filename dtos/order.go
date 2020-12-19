@@ -23,6 +23,7 @@ type ToRequirement struct {
 	Region         string  `json:"region"`
 	GroomerOrderID uint    `json:"groomer_order_id"` // 美容师接单号
 	UserID         uint    `json:"user_id"`          // account id
+	IsCommentTo    bool    `json:"is_comment_to"`    // 标志是否已经评论过美容师
 }
 
 // 订单类型
@@ -53,4 +54,5 @@ type ToMatch struct {
 	UserID          uint   `json:"user_id"`           // account id
 	City            string `json:"city"`
 	Region          string `json:"region"`
+	IsCommentTo     bool   `json:"is_comment_to"` // 标志是否已经评论过门店
 }
