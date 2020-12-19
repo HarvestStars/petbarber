@@ -40,6 +40,7 @@ const (
 	NEW            = 4 // 等待接单
 	RUNNING        = 5 // 正在进行
 	FINISHED       = 6 // 订单完成
+	OUTTIME        = 7 // 超时取消
 )
 
 // ToMatch 美容师接单

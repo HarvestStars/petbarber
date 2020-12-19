@@ -136,15 +136,19 @@ func PetHouseCancelOrder(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "未被接单取消"})
 
 	case dtos.RUNNING:
+		requirementOrderStatus := dtos.CANCELORDER
 		// RUNNING 取消
 		// 十分钟校验
 		var matchOrder dtos.ToMatch
 		tx.Model(&dtos.ToMatch{}).Where("id = ?", requirementOrder.GroomerOrderID).First(&matchOrder)
 		if (matchOrder.CreatedAt/1e3 + 600) < time.Now().UTC().Unix() {
 			// 超出可取消时间
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "被接单已经超过10分钟"})
-			tx.Commit()
-			return
+			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "被接单已经超过10分钟"})
+			// tx.Commit()
+			// return
+
+			// 超时取消, 记录违约
+			requirementOrderStatus = dtos.OUTTIME
 		}
 
 		// match 和 requirement 双表联动取消
@@ -154,7 +158,7 @@ func PetHouseCancelOrder(c *gin.Context) {
 
 		tx.Model(&dtos.ToRequirement{}).Where("id = ?", uint(orderID)).UpdateColumns(dtos.ToRequirement{
 			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
-			Status:    dtos.CANCELORDER,
+			Status:    requirementOrderStatus,
 		})
 		tx.Commit()
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "10分钟内正常取消"})

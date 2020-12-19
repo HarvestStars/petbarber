@@ -113,12 +113,16 @@ func GroomerCancelOrder(c *gin.Context) {
 
 	switch matchOrder.Status {
 	case dtos.RUNNING:
+		matchOrderStatus := dtos.CANCELPETHOUSE
 		// 十分钟校验
 		if (matchOrder.CreatedAt/1e3 + 600) < time.Now().UTC().Unix() {
 			// 超出可取消时间
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "接单已经超过10分钟"})
-			tx.Commit()
-			return
+			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.ORDER_CANCEL_NOT_ALLOWED, "msg": "Sorry", "data": "", "detail": "接单已经超过10分钟"})
+			// tx.Commit()
+			// return
+
+			// 超时取消, 记录违约
+			matchOrderStatus = dtos.OUTTIME
 		}
 		// match 和 requirement 双表联动取消
 		// requirement 回到等待接单状态
@@ -130,7 +134,7 @@ func GroomerCancelOrder(c *gin.Context) {
 
 		tx.Model(&dtos.ToMatch{}).Where("id = ?", matchOrder.ID).UpdateColumns(dtos.ToMatch{
 			UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
-			Status:    dtos.CANCELPETHOUSE,
+			Status:    matchOrderStatus,
 		})
 		tx.Commit()
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "10分钟内正常取消"})
