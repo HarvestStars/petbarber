@@ -67,15 +67,14 @@ func CreateOrderComment(c *gin.Context) {
 		comment.GroomerOrderID = matchOrder.ID
 		db.DataBase.Model(&dtos.TComment{}).Where("pethouse_order_id = ? AND groomer_order_id = ?", commentReq.OrderID, matchOrder.ID).Count(&count)
 		if count == 0 {
-			// 未评论记录
-			db.DataBase.Create(&comment)
 			// 积分刷新
 			// TComment中找到所有to_user_id(美容师)订单，做累加
 			finishedCount := 0
 			db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ?", groomer.AccountID).Count(&finishedCount)
 			newFavor := (float32(finishedCount)*groomer.Favor + commentReq.Favor) / (float32(finishedCount) + 1)
-			// 事务
+			// 事务: 创建评论，更新积分，标记已评论
 			tx := db.DataBase.Begin()
+			tx.Create(&comment)
 			tx.Model(&dtos.TuGroomer{}).Where("account_id = ?", matchOrder.UserID).UpdateColumns(dtos.TuGroomer{
 				Favor: newFavor,
 			})
@@ -123,15 +122,14 @@ func CreateOrderComment(c *gin.Context) {
 		comment.GroomerOrderID = commentReq.OrderID
 		db.DataBase.Model(&dtos.TComment{}).Where("pethouse_order_id = ? AND groomer_order_id = ?", requirementOrder.ID, commentReq.OrderID).Count(&count)
 		if count == 0 {
-			// 未评论记录
-			db.DataBase.Create(&comment)
 			// 积分刷新
 			// TComment中找到所有to_user_id(门店)订单，做累加
 			finishedCount := 0
 			db.DataBase.Model(&dtos.TComment{}).Where("to_user_id = ?", petHouse.AccountID).Count(&finishedCount)
 			newFavor := (float32(finishedCount)*petHouse.Favor + commentReq.Favor) / (float32(finishedCount) + 1)
-			// 事务
+			// 事务: 创建评论，更新积分，标记已评论
 			tx := db.DataBase.Begin()
+			tx.Create(&comment)
 			tx.Model(&dtos.TuPethouse{}).Where("account_id = ?", requirementOrder.UserID).UpdateColumns(dtos.TuPethouse{
 				Favor: newFavor,
 			})
