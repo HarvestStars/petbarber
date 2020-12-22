@@ -124,18 +124,23 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "id_card":
+		cardFlag := 3 // 01=front, 10=back, 11=both
 		IDCardNumber := c.Request.PostFormValue("id_card_number")
+		name := c.Request.PostFormValue("name")
+
 		fileFront, headerFront, err := c.Request.FormFile("id_front")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			return
+			//c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "id_front", "detail": err.Error()})
+			//return
+			cardFlag = cardFlag & 2
 		}
 		fileBack, headerBack, err := c.Request.FormFile("id_back")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			return
+			//c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "id_back", "detail": err.Error()})
+			//return
+			cardFlag = cardFlag & 1
 		}
-		err = UploadIDCard(accountID, IDCardNumber, fileFront, headerFront, fileBack, headerBack, userType)
+		err = UploadIDCard(accountID, name, IDCardNumber, fileFront, headerFront, fileBack, headerBack, userType, cardFlag)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
@@ -183,6 +188,7 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "house_license":
+		licenseFlag := 7 // 111 = 门店正面，门店环境，营业执照
 		if userType != 1 {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
 			return
@@ -196,39 +202,64 @@ func UploadImage(c *gin.Context) {
 		}
 		fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment_front")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			return
+			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+			// return
+			licenseFlag = licenseFlag & 3 // 011
 		}
 		fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment_inside")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			return
+			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+			// return
+			licenseFlag = licenseFlag & 5 // 101
 		}
 		fileFront, headerFront, err := c.Request.FormFile("license_front")
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			return
+			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+			// return
+			licenseFlag = licenseFlag & 6 // 110
 		}
-		fileNameEnvFront, err := transferImage(fileEnvFront, headerEnvFront, setting.ImagePathSetting.HouseEnvironmentPath)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
-			return
+
+		// 正面 100
+		var fileNameEnvFront string
+		if licenseFlag&4 == 4 {
+			fileNameEnvFront, err = transferImage(fileEnvFront, headerEnvFront, setting.ImagePathSetting.HouseEnvironmentPath)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+				return
+			}
+			db.DataBase.Model(&house).UpdateColumns(dtos.TuPethouse{
+				UpdatedAt:        time.Now().UTC().UnixNano() / 1e6,
+				EnvironmentFront: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
+			})
 		}
-		fileNameEnvIn, err := transferImage(fileEnvIn, headerEnvIn, setting.ImagePathSetting.HouseEnvironmentPath)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
-			return
+
+		// 环境 010
+		var fileNameEnvIn string
+		if licenseFlag&2 == 2 {
+			fileNameEnvIn, err = transferImage(fileEnvIn, headerEnvIn, setting.ImagePathSetting.HouseEnvironmentPath)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+				return
+			}
+			db.DataBase.Model(&house).UpdateColumns(dtos.TuPethouse{
+				UpdatedAt:         time.Now().UTC().UnixNano() / 1e6,
+				EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
+			})
 		}
-		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
-			return
+
+		// 营业执照 001
+		var fileNameFront string
+		if licenseFlag&1 == 1 {
+			fileNameFront, err = transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+				return
+			}
+			db.DataBase.Model(&house).UpdateColumns(dtos.TuPethouse{
+				UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
+				License:   setting.ImagePathSetting.HouseLicensePath + fileNameFront,
+			})
 		}
-		db.DataBase.Model(&house).UpdateColumns(dtos.TuPethouse{
-			UpdatedAt:         time.Now().UTC().UnixNano() / 1e6,
-			EnvironmentFront:  setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
-			EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
-			License:           setting.ImagePathSetting.HouseLicensePath + fileNameFront})
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
 		return
 
@@ -281,10 +312,15 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 }
 
 // UploadIDCard 上传身份证正反面照片
-func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File, headerFront *multipart.FileHeader, fileBack multipart.File, headerBack *multipart.FileHeader, userType int) error {
+func UploadIDCard(accountID uint, name string, IDCardNumber string, fileFront multipart.File, headerFront *multipart.FileHeader, fileBack multipart.File, headerBack *multipart.FileHeader, userType int, cardFlag int) error {
+	var fileNameFront = ""
+	var fileNameBack = ""
+	err := errors.New("")
+
 	switch userType {
 	case 0:
 		return errors.New("请先确定职业身份")
+
 	case 1:
 		var house dtos.TuPethouse
 		houseAccount := 0
@@ -292,20 +328,43 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 		if houseAccount == 0 {
 			return errors.New("没有找到该门店账户")
 		}
-		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseIDCardPath)
-		if err != nil {
-			return errors.New("图片大小不能超过5M")
+
+		if cardFlag == 1 || cardFlag == 3 {
+			fileNameFront, err = transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseIDCardPath)
+			if err != nil {
+				return errors.New("图片大小不能超过5M")
+			}
 		}
-		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.HouseIDCardPath)
-		if err != nil {
-			return errors.New("图片大小不能超过5M")
+		if cardFlag == 2 || cardFlag == 3 {
+			fileNameBack, err = transferImage(fileBack, headerBack, setting.ImagePathSetting.HouseIDCardPath)
+			if err != nil {
+				return errors.New("图片大小不能超过5M")
+			}
 		}
-		db.DataBase.Model(&house).UpdateColumns(map[string]interface{}{
-			"updated_at":     time.Now().UTC().UnixNano() / 1e6,
-			"id_card_number": IDCardNumber,
-			"id_card_front":  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
-			"id_card_back":   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
+		if cardFlag == 1 {
+			db.DataBase.Model(&house).UpdateColumns(map[string]interface{}{
+				"updated_at":     time.Now().UTC().UnixNano() / 1e6,
+				"name":           name,
+				"id_card_number": IDCardNumber,
+				"id_card_front":  setting.ImagePathSetting.HouseIDCardPath + fileNameFront})
+		}
+		if cardFlag == 2 {
+			db.DataBase.Model(&house).UpdateColumns(map[string]interface{}{
+				"updated_at":     time.Now().UTC().UnixNano() / 1e6,
+				"name":           name,
+				"id_card_number": IDCardNumber,
+				"id_card_back":   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
+		}
+		if cardFlag == 3 {
+			db.DataBase.Model(&house).UpdateColumns(map[string]interface{}{
+				"updated_at":     time.Now().UTC().UnixNano() / 1e6,
+				"name":           name,
+				"id_card_number": IDCardNumber,
+				"id_card_front":  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
+				"id_card_back":   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
+		}
 		return nil
+
 	case 2:
 		var groomer dtos.TuGroomer
 		groomerAccount := 0
@@ -313,20 +372,39 @@ func UploadIDCard(accountID uint, IDCardNumber string, fileFront multipart.File,
 		if groomerAccount == 0 {
 			return errors.New("没有找到该美容师账户")
 		}
-		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerIDCardPath)
-		if err != nil {
-			return errors.New("图片大小不能超过5M")
+		if cardFlag == 1 || cardFlag == 3 {
+			fileNameFront, err = transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerIDCardPath)
+			if err != nil {
+				return errors.New("图片大小不能超过5M")
+			}
 		}
-		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerIDCardPath)
-		if err != nil {
-			return errors.New("图片大小不能超过5M")
+		if cardFlag == 2 || cardFlag == 3 {
+			fileNameBack, err = transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerIDCardPath)
+			if err != nil {
+				return errors.New("图片大小不能超过5M")
+			}
 		}
-		db.DataBase.Model(&groomer).UpdateColumns(map[string]interface{}{
-			"updated_at":     time.Now().UTC().UnixNano() / 1e6,
-			"id_card_number": IDCardNumber,
-			"id_card_front":  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
-			"id_card_back":   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
+		if cardFlag == 1 {
+			db.DataBase.Model(&groomer).UpdateColumns(map[string]interface{}{
+				"updated_at":     time.Now().UTC().UnixNano() / 1e6,
+				"id_card_number": IDCardNumber,
+				"id_card_front":  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront})
+		}
+		if cardFlag == 2 {
+			db.DataBase.Model(&groomer).UpdateColumns(map[string]interface{}{
+				"updated_at":     time.Now().UTC().UnixNano() / 1e6,
+				"id_card_number": IDCardNumber,
+				"id_card_back":   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
+		}
+		if cardFlag == 3 {
+			db.DataBase.Model(&groomer).UpdateColumns(map[string]interface{}{
+				"updated_at":     time.Now().UTC().UnixNano() / 1e6,
+				"id_card_number": IDCardNumber,
+				"id_card_front":  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
+				"id_card_back":   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
+		}
 		return nil
+
 	default:
 		return errors.New("身份证类型错误")
 	}

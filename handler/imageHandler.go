@@ -241,3 +241,7 @@ func GetCertificateImage(c *gin.Context) {
 		return
 	}
 }
+
+func ImageTest(c *gin.Context) {
+	c.File("./image/avatar/test.png")
+}

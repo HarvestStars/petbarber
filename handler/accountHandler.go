@@ -36,6 +36,12 @@ func SendSmsCode(c *gin.Context) {
 	smid, expireAt := createSmsCode(phone, codeStr)
 	res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
 	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
+
+	// phone := c.Param("phone")
+	// codeStr := "1234"
+	// smid, expireAt := createSmsCode(phone, codeStr)
+	// res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
+	// c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
 }
 
 func createSmsCode(phone string, codeStr string) (string, int64) {
@@ -196,6 +202,7 @@ func GetUserProfile(c *gin.Context) {
 			// create
 			house.AccountID = accountID
 			house.CreatedAt = time.Now().UTC().UnixNano() / 1e6
+			house.Phone = phone
 			db.DataBase.Create(&house)
 		} else {
 			// 转换图片URL
@@ -225,6 +232,7 @@ func GetUserProfile(c *gin.Context) {
 			// create
 			groomer.AccountID = accountID
 			groomer.CreatedAt = time.Now().UTC().UnixNano() / 1e6
+			groomer.Phone = phone
 			db.DataBase.Create(&groomer)
 		} else {
 			// 转换图片URL

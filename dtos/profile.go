@@ -11,6 +11,7 @@ type TuPethouse struct {
 	NickName string  `json:"nick_name"`               // 昵称
 	Favor    float32 `json:"favor"`                   // 星级评分
 	Status   int     `json:"status"`                  // 状态
+	Phone    string  `json:"phone"`                   // 联系方式
 
 	// 身份证信息
 	Name         string `json:"name"`                           // 实名
@@ -43,6 +44,7 @@ type TuGroomer struct {
 	NickName string  `json:"nick_name"`               // 昵称
 	Favor    float32 `json:"favor"`                   // 星级评分
 	Status   int     `json:"status"`                  // 状态
+	Phone    string  `json:"phone"`                   // 联系方式
 
 	// 身份证信息
 	Name         string `json:"name"`                           // 实名
