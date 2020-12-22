@@ -91,6 +91,11 @@ func UploadHouse(c *gin.Context) {
 	}
 }
 
+type IDCardResp struct {
+	Front string `json:"front"`
+	Back  string `json:"back"`
+}
+
 // UploadImage 上传图片功能
 func UploadImage(c *gin.Context) {
 	auth := c.Request.Header.Get("authorization")
@@ -124,28 +129,25 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "id_card":
+		IDCardUrl := IDCardResp{}
 		cardFlag := 3 // 01=front, 10=back, 11=both
 		IDCardNumber := c.Request.PostFormValue("id_card_number")
 		name := c.Request.PostFormValue("name")
 
 		fileFront, headerFront, err := c.Request.FormFile("id_front")
 		if err != nil {
-			//c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "id_front", "detail": err.Error()})
-			//return
 			cardFlag = cardFlag & 2
 		}
 		fileBack, headerBack, err := c.Request.FormFile("id_back")
 		if err != nil {
-			//c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "id_back", "detail": err.Error()})
-			//return
 			cardFlag = cardFlag & 1
 		}
-		err = UploadIDCard(accountID, name, IDCardNumber, fileFront, headerFront, fileBack, headerBack, userType, cardFlag)
+		err = UploadIDCard(accountID, name, IDCardNumber, fileFront, headerFront, fileBack, headerBack, userType, cardFlag, &IDCardUrl)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": "", "detail": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "OK", "data": IDCardUrl, "detail": "更新成功"})
 		return
 
 	case "certificate":
@@ -188,6 +190,13 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "house_license":
+		type houseImageResp struct {
+			Front   string `json:"front"`
+			Inside  string `json:"inside"`
+			License string `json:"license"`
+		}
+		houseImageUrl := houseImageResp{}
+
 		licenseFlag := 7 // 111 = 门店正面，门店环境，营业执照
 		if userType != 1 {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETHOUSE_TOKEN, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
@@ -202,20 +211,14 @@ func UploadImage(c *gin.Context) {
 		}
 		fileEnvFront, headerEnvFront, err := c.Request.FormFile("environment_front")
 		if err != nil {
-			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			// return
 			licenseFlag = licenseFlag & 3 // 011
 		}
 		fileEnvIn, headerEnvIn, err := c.Request.FormFile("environment_inside")
 		if err != nil {
-			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			// return
 			licenseFlag = licenseFlag & 5 // 101
 		}
 		fileFront, headerFront, err := c.Request.FormFile("license_front")
 		if err != nil {
-			// c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			// return
 			licenseFlag = licenseFlag & 6 // 110
 		}
 
@@ -231,6 +234,7 @@ func UploadImage(c *gin.Context) {
 				UpdatedAt:        time.Now().UTC().UnixNano() / 1e6,
 				EnvironmentFront: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvFront,
 			})
+			houseImageUrl.Front = "/api/v1/images/envir/" + fileNameEnvFront
 		}
 
 		// 环境 010
@@ -245,22 +249,24 @@ func UploadImage(c *gin.Context) {
 				UpdatedAt:         time.Now().UTC().UnixNano() / 1e6,
 				EnvironmentInside: setting.ImagePathSetting.HouseEnvironmentPath + fileNameEnvIn,
 			})
+			houseImageUrl.Inside = "/api/v1/images/envir/" + fileNameEnvIn
 		}
 
 		// 营业执照 001
-		var fileNameFront string
+		var fileNameLicense string
 		if licenseFlag&1 == 1 {
-			fileNameFront, err = transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
+			fileNameLicense, err = transferImage(fileFront, headerFront, setting.ImagePathSetting.HouseLicensePath)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 				return
 			}
 			db.DataBase.Model(&house).UpdateColumns(dtos.TuPethouse{
 				UpdatedAt: time.Now().UTC().UnixNano() / 1e6,
-				License:   setting.ImagePathSetting.HouseLicensePath + fileNameFront,
+				License:   setting.ImagePathSetting.HouseLicensePath + fileNameLicense,
 			})
+			houseImageUrl.License = "/api/v1/images/license/" + fileNameLicense
 		}
-		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": houseImageUrl, "detail": "更新成功"})
 		return
 
 	default:
@@ -312,7 +318,8 @@ func UploadAvatar(accountID uint, fileFront multipart.File, headerFront *multipa
 }
 
 // UploadIDCard 上传身份证正反面照片
-func UploadIDCard(accountID uint, name string, IDCardNumber string, fileFront multipart.File, headerFront *multipart.FileHeader, fileBack multipart.File, headerBack *multipart.FileHeader, userType int, cardFlag int) error {
+func UploadIDCard(accountID uint, name string, IDCardNumber string, fileFront multipart.File, headerFront *multipart.FileHeader,
+	fileBack multipart.File, headerBack *multipart.FileHeader, userType int, cardFlag int, idUrl *IDCardResp) error {
 	var fileNameFront = ""
 	var fileNameBack = ""
 	err := errors.New("")
@@ -363,6 +370,8 @@ func UploadIDCard(accountID uint, name string, IDCardNumber string, fileFront mu
 				"id_card_front":  setting.ImagePathSetting.HouseIDCardPath + fileNameFront,
 				"id_card_back":   setting.ImagePathSetting.HouseIDCardPath + fileNameBack})
 		}
+		idUrl.Front = "/api/v1/images/idcard/" + fileNameFront
+		idUrl.Back = "/api/v1/images/idcard/" + fileNameBack
 		return nil
 
 	case 2:
@@ -403,6 +412,8 @@ func UploadIDCard(accountID uint, name string, IDCardNumber string, fileFront mu
 				"id_card_front":  setting.ImagePathSetting.GroomerIDCardPath + fileNameFront,
 				"id_card_back":   setting.ImagePathSetting.GroomerIDCardPath + fileNameBack})
 		}
+		idUrl.Front = "/api/v1/images/idcard/" + fileNameFront
+		idUrl.Back = "/api/v1/images/idcard/" + fileNameBack
 		return nil
 
 	default:

@@ -57,7 +57,6 @@ func main() {
 	r.GET("/api/v1/images/envir/:name", handler.GetEnvironmentImage)
 	r.GET("/api/v1/images/license/:name", handler.GetLicenseImage)
 	r.GET("/api/v1/images/certifi/:name", handler.GetCertificateImage)
-	r.GET("/api/v1/images/imagetest", handler.ImageTest)
 
 	// 法务部分
 	r.GET("/api/v1/law/agreement", handler.GetAgreement)
