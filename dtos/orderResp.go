@@ -92,6 +92,7 @@ func (order *PCOrderResp) RespTransfer(requirementOrder ToRequirement, matchOrde
 	}
 	detail := Detail{Basic: requirementOrder.Basic, Commission: requirementOrder.Commission, TotalPayment: requirementOrder.TotalPayment}
 	order.Payment = PaymentInfo{Mode: payModeInt, Detail: detail}
+	groomer.Avatar = GenImageURL("/api/v1/images/avatar/", groomer.Avatar)
 	order.Children = Children{MatchOrder: matchOrder, Groomer: groomer}
 	order.UserID = requirementOrder.UserID
 	order.IsCommentTo = requirementOrder.IsCommentTo
@@ -122,6 +123,7 @@ func (order *PCMatchResp) RespTransfer(matchOrder ToMatch, requirementOrder ToRe
 	order.UpdatedAt = matchOrder.UpdatedAt
 	var requirementResp PCOrderRespOnlyCreate
 	requirementResp.RespCreateOrder(requirementOrder)
+	petHouse.Avatar = GenImageURL("/api/v1/images/avatar/", petHouse.Avatar)
 	order.Parent = Parent{
 		RequirementOrder: requirementResp,
 		PetHouse:         petHouse,
@@ -172,4 +174,23 @@ func (order *PCActiveOrderResp) RespTransfer(requirementOrder ToRequirement, pet
 type PCActiveListResp struct {
 	List     []PCActiveOrderResp `json:"lists"`
 	PageInfo PageInfo            `json:"pagination"`
+}
+
+// GenImageURL 生成图片访问url
+func GenImageURL(baseURL string, imagePath string) string {
+	if imagePath == "" {
+		return ""
+	}
+	fileName := getFileNameWithSuffix(imagePath)
+	URL := baseURL + fileName
+	return URL
+}
+
+func getFileNameWithSuffix(path string) string {
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] == '/' {
+			return path[i+1:]
+		}
+	}
+	return ""
 }

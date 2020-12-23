@@ -67,6 +67,9 @@ func transferImage(file multipart.File, header *multipart.FileHeader, rootPath s
 
 // GenImageURL 生成图片访问url
 func GenImageURL(baseURL string, imagePath string) string {
+	if imagePath == "" {
+		return ""
+	}
 	fileName := getFileNameWithSuffix(imagePath)
 	URL := baseURL + fileName
 	return URL

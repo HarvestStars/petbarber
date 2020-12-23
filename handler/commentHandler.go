@@ -65,7 +65,7 @@ func CreateOrderComment(c *gin.Context) {
 		comment.Content = commentReq.Content
 		comment.PethouseOrderID = commentReq.OrderID
 		comment.GroomerOrderID = matchOrder.ID
-		db.DataBase.Model(&dtos.TComment{}).Where("pethouse_order_id = ? AND groomer_order_id = ?", commentReq.OrderID, matchOrder.ID).Count(&count)
+		db.DataBase.Model(&dtos.TComment{}).Where("from_user_id = ? AND pethouse_order_id = ? AND groomer_order_id = ?", accountID, commentReq.OrderID, matchOrder.ID).Count(&count)
 		if count == 0 {
 			// 积分刷新
 			// TComment中找到所有to_user_id(美容师)订单，做累加
@@ -120,7 +120,7 @@ func CreateOrderComment(c *gin.Context) {
 		comment.Content = commentReq.Content
 		comment.PethouseOrderID = requirementOrder.ID
 		comment.GroomerOrderID = commentReq.OrderID
-		db.DataBase.Model(&dtos.TComment{}).Where("pethouse_order_id = ? AND groomer_order_id = ?", requirementOrder.ID, commentReq.OrderID).Count(&count)
+		db.DataBase.Model(&dtos.TComment{}).Where("from_user_id = ? AND pethouse_order_id = ? AND groomer_order_id = ?", accountID, requirementOrder.ID, commentReq.OrderID).Count(&count)
 		if count == 0 {
 			// 积分刷新
 			// TComment中找到所有to_user_id(门店)订单，做累加

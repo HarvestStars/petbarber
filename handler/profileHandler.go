@@ -151,6 +151,10 @@ func UploadImage(c *gin.Context) {
 		return
 
 	case "certificate":
+		type certifiUrl struct {
+			Front string `json:"front"`
+		}
+		certificate := certifiUrl{}
 		if userType != 2 {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.JWT_EXPECTED_PETGROOMER_TOKEN, "msg": "Sorry", "data": "", "detail": "jwt usertype error"})
 			return
@@ -167,26 +171,27 @@ func UploadImage(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
 			return
 		}
-		fileBack, headerBack, err := c.Request.FormFile("certifi_back")
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
-			return
-		}
+		// fileBack, headerBack, err := c.Request.FormFile("certifi_back")
+		// if err != nil {
+		// 	c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_FETCH_ERROR, "msg": "Sorry", "data": "", "detail": err.Error()})
+		// 	return
+		// }
 		fileNameFront, err := transferImage(fileFront, headerFront, setting.ImagePathSetting.GroomerCertificatePath)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
 			return
 		}
-		fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerCertificatePath)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
-			return
-		}
+		// fileNameBack, err := transferImage(fileBack, headerBack, setting.ImagePathSetting.GroomerCertificatePath)
+		// if err != nil {
+		// 	c.JSON(http.StatusBadRequest, gin.H{"code": dtos.IMAGE_UPLOAD_ERROR, "msg": "Sorry", "data": "", "detail": "图片大小不能超过5M"})
+		// 	return
+		// }
 		db.DataBase.Model(&groomer).UpdateColumns(dtos.TuGroomer{
 			UpdatedAt:        time.Now().UTC().UnixNano() / 1e6,
 			CertificateFront: setting.ImagePathSetting.GroomerCertificatePath + fileNameFront,
-			CertificateBack:  setting.ImagePathSetting.GroomerCertificatePath + fileNameBack})
-		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": "", "detail": "更新成功"})
+		})
+		certificate.Front = "/api/v1/images/certifi/" + fileNameFront
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": certificate, "detail": "更新成功"})
 		return
 
 	case "house_license":

@@ -279,8 +279,13 @@ func GroomerGetActivePethouseOrder(c *gin.Context) {
 	// 平台所有等待接单的requirement, 剔除上述被取消的match部分
 	var requirementOrders []dtos.ToRequirement
 	count := 0
-	db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ? AND region = ?", dtos.NEW, region).Not(denyOrderList).
-		Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
+	if region != "" {
+		db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ? AND region = ?", dtos.NEW, region).Not(denyOrderList).
+			Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
+	} else {
+		db.DataBase.Model(&dtos.ToRequirement{}).Where("status = ?", dtos.NEW).Not(denyOrderList).
+			Count(&count).Limit(pageSize).Offset((pageIndex - 1) * pageSize).Find(&requirementOrders)
+	}
 
 	var listResp []dtos.PCActiveOrderResp
 	for _, order := range requirementOrders {
