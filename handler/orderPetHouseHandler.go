@@ -73,10 +73,12 @@ func PetHouseCreateOrder(c *gin.Context) {
 		return
 	}
 	// 获取门店城市与区域信息
-	var owner dtos.TuPethouse
-	db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).First(&owner)
-	requirementOrder.City = owner.City
-	requirementOrder.Region = owner.Region
+	// var owner dtos.TuPethouse
+	// db.DataBase.Model(&dtos.TuPethouse{}).Where("account_id = ?", accountID).First(&owner)
+	// requirementOrder.City = owner.City
+	// requirementOrder.Region = owner.Region
+	requirementOrder.City = petHouseOrderReq.City
+	requirementOrder.Region = petHouseOrderReq.Region
 
 	// 转换请求数据，然后记录DB, 事务
 	tx := db.DataBase.Begin()

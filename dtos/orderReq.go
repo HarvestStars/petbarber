@@ -12,6 +12,8 @@ type CreatePetHousePCOrderReq struct {
 	ServiceItems []int   `json:"service_items"`
 	Basic        float32 `json:"basic"`
 	Commission   int     `json:"commission"`
+	City         string  `json:"city"`
+	Region       string  `json:"region"`
 }
 
 func ToServiceBits(serviceItems []int) int64 {
