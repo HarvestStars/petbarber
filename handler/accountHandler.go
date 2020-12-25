@@ -20,28 +20,32 @@ import (
 
 func SendSmsCode(c *gin.Context) {
 	phone := c.Param("phone")
-	client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", setting.AliSmsSetting.AccessID, setting.AliSmsSetting.AccessSecret)
-	request := dysmsapi.CreateSendSmsRequest()
-	request.Scheme = "https"
-	request.PhoneNumbers = phone
-	request.SignName = setting.AliSmsSetting.SignName
-	request.TemplateCode = setting.AliSmsSetting.TemplateCode
-	codeStr := strconv.Itoa(rand.Intn(9000) + 1000)
-	templateRaw := fmt.Sprintf("{\"code\":\"%s\"}", codeStr)
-	request.TemplateParam = templateRaw
-	_, err = client.SendSms(request)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "OK", "data": "", "detail": err})
+	if phone == "13611688224" || phone == "18601729597" {
+		// 测试账号 直接登陆
+		phone := c.Param("phone")
+		codeStr := "1234"
+		smid, expireAt := createSmsCode(phone, codeStr)
+		res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
+	} else {
+		// 用户账号 发送验证码
+		client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", setting.AliSmsSetting.AccessID, setting.AliSmsSetting.AccessSecret)
+		request := dysmsapi.CreateSendSmsRequest()
+		request.Scheme = "https"
+		request.PhoneNumbers = phone
+		request.SignName = setting.AliSmsSetting.SignName
+		request.TemplateCode = setting.AliSmsSetting.TemplateCode
+		codeStr := strconv.Itoa(rand.Intn(9000) + 1000)
+		templateRaw := fmt.Sprintf("{\"code\":\"%s\"}", codeStr)
+		request.TemplateParam = templateRaw
+		_, err = client.SendSms(request)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": dtos.URL_ERROR, "msg": "OK", "data": "", "detail": err})
+		}
+		smid, expireAt := createSmsCode(phone, codeStr)
+		res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
+		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
 	}
-	smid, expireAt := createSmsCode(phone, codeStr)
-	res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
-	c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
-
-	// phone := c.Param("phone")
-	// codeStr := "1234"
-	// smid, expireAt := createSmsCode(phone, codeStr)
-	// res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
-	// c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
 }
 
 func createSmsCode(phone string, codeStr string) (string, int64) {
