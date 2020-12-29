@@ -243,3 +243,9 @@ func GetCertificateImage(c *gin.Context) {
 	// 	return
 	// }
 }
+
+func SystemAvatar(c *gin.Context) {
+	imageName := c.Param("name")
+	path := setting.ImagePathSetting.AvatarPath + imageName
+	c.File(path)
+}

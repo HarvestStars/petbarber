@@ -46,6 +46,12 @@ func SendSmsCode(c *gin.Context) {
 		res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
 		c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
 	}
+
+	// phone := c.Param("phone")
+	// codeStr := "1234"
+	// smid, expireAt := createSmsCode(phone, codeStr)
+	// res := dtos.SmsToken{Smsid: smid, ExpireAt: expireAt}
+	// c.JSON(http.StatusOK, gin.H{"code": dtos.OK, "msg": "OK", "data": res, "detail": ""})
 }
 
 func createSmsCode(phone string, codeStr string) (string, int64) {
